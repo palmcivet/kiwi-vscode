@@ -5,6 +5,7 @@
   "editor.insertSpaces": true,
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "typescript.tsc.autoDetect": "off",
+  "typescript.tsdk": "node_modules/typescript/lib",
   "eslint.format.enable": true,
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,

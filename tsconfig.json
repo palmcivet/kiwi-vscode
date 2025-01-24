@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ESNext",
+    "target": "es2020",
     "lib": [
-      "ESNext"
+      "es2020"
     ],
     "outDir": "out",
     "rootDir": "src",
+    "strict": true,
     "sourceMap": true
   },
   "include": [
