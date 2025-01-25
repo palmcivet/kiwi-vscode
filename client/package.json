@@ -2,7 +2,6 @@
   "name": "kiwi-vscode-lsp-client",
   "description": "Implementation of the LSP client for kiwi in VSCode.",
   "private": true,
-  "version": "0.0.3",
   "engines": {
     "vscode": "^1.75.0"
   },
