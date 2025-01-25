@@ -1,0 +1,4 @@
+message Vec {
+  float x = 1;
+  float y = 2;
+}
