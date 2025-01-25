@@ -1,0 +1,18 @@
+message Vector {
+  float x = 1;
+  float y = 2;
+}
+
+message Rect {
+  float x = 1;
+  float y = 2;
+  float w = 3;
+  float h = 4;
+}
+
+message Viewport {
+  Rect canvasSpaceBounds = 1;
+  bool pixelPreview = 2;
+  float pixelDensity = 3;
+  Vector size = 4;
+}

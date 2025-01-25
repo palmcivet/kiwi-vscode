@@ -1,36 +1,39 @@
 import {
   createConnection,
   TextDocuments,
-  Diagnostic,
   DiagnosticSeverity,
   ProposedFeatures,
-  InitializeParams,
-  CompletionItem,
   CompletionItemKind,
-  TextDocumentPositionParams,
   TextDocumentSyncKind,
-  InitializeResult,
   DocumentDiagnosticReportKind,
-  type DocumentDiagnosticReport,
   DiagnosticRelatedInformation,
-  DefinitionParams,
-  HoverParams,
-  CancellationToken,
-  Hover,
-  Definition,
-  ReferenceParams,
-  Location,
-  DocumentSymbolParams,
-  DocumentSymbol,
   SymbolKind,
   DiagnosticTag,
-  CodeActionParams,
   CodeActionKind,
-  CodeAction,
   TextEdit,
+  type Diagnostic,
+  type InitializeParams,
+  type CompletionItem,
+  type TextDocumentPositionParams,
+  type InitializeResult,
+  type DocumentDiagnosticReport,
+  type DefinitionParams,
+  type HoverParams,
+  type CancellationToken,
+  type Hover,
+  type Definition,
+  type ReferenceParams,
+  type Location,
+  type DocumentSymbolParams,
+  type DocumentSymbol,
+  type CodeActionParams,
+  type CodeAction,
+  type Range,
 } from 'vscode-languageserver/node';
 import { Position, TextDocument } from 'vscode-languageserver-textdocument';
 import { camelCase, pascalCase, constantCase, sentenceCase } from 'change-case';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import { nativeTypes, parseSchema, tokenize } from './parser';
 import { Schema, Definition as KiwiDefinition, Field, Token } from './schema';
@@ -48,6 +51,22 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
+let includeFiles: string[] = [];
+let workspaceFolders: string[] = [];
+
+function uriToPath(uri: string): string {
+  let filePath = uri.replace('file://', '');
+  // 处理 Windows 路径
+  if (process.platform === 'win32') {
+    // 移除开头的 /
+    if (filePath.startsWith('/')) {
+      filePath = filePath.substring(1);
+    }
+    // 替换 URL 编码的字符
+    filePath = decodeURIComponent(filePath);
+  }
+  return filePath;
+}
 
 connection.onInitialize((params: InitializeParams) => {
   const capabilities = params.capabilities;
@@ -60,6 +79,13 @@ connection.onInitialize((params: InitializeParams) => {
     capabilities.textDocument.publishDiagnostics &&
     capabilities.textDocument.publishDiagnostics.relatedInformation
   );
+
+  // 获取初始化参数中的包含文件列表
+  includeFiles = (params.initializationOptions?.includeFiles as string[]) || [];
+
+  // 获取工作区文件夹
+  workspaceFolders =
+    params.workspaceFolders?.map((folder) => uriToPath(folder.uri)) || [];
 
   const result: InitializeResult = {
     capabilities: {
@@ -102,7 +128,150 @@ documents.onDidChangeContent((change) => validateTextDocument(change.document));
 const files: Record<string, Schema> = {};
 
 async function validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
-  const text = textDocument.getText();
+  // 如果当前文件在 includeFiles 列表中，则不需要拼接
+  const currentFilePath = uriToPath(textDocument.uri);
+  const workspaceFolder = workspaceFolders[0] || '';
+
+  // 检查当前文件是否在 includeFiles 列表中
+  const isIncludeFile = includeFiles.some((file) => {
+    const filePath = path.isAbsolute(file) ? file : path.join(workspaceFolder, file);
+    return path.normalize(filePath) === path.normalize(currentFilePath);
+  });
+
+  if (isIncludeFile) {
+    const text = textDocument.getText();
+    let schema: Schema | undefined;
+    let errors: KiwiParseError[] = [];
+
+    try {
+      const [parsed, validateErrors] = parseSchema(text);
+      files[textDocument.uri] = parsed;
+      schema = parsed;
+      errors = validateErrors;
+    } catch (e: any) {
+      errors.push(e);
+    }
+
+    const diagnostics: Diagnostic[] = errors.map((e) => ({
+      message: e.message,
+      range: e.range,
+      relatedInformation:
+        e.relatedInformation && hasDiagnosticRelatedInformationCapability
+          ? [
+            DiagnosticRelatedInformation.create(
+              {
+                uri: textDocument.uri,
+                range: e.relatedInformation.span,
+              },
+              e.relatedInformation.message
+            ),
+          ]
+          : undefined,
+      severity: DiagnosticSeverity.Error,
+      source: 'kiwi',
+      data: e.errorKind,
+    }));
+
+    for (const e of errors) {
+      if (!e.relatedInformation || !hasDiagnosticRelatedInformationCapability) {
+        continue;
+      }
+
+      diagnostics.push({
+        message: 'First definition here',
+        range: e.relatedInformation.span,
+        relatedInformation: [
+          DiagnosticRelatedInformation.create(
+            { uri: textDocument.uri, range: e.range },
+            'Duplicated here'
+          ),
+        ],
+        severity: DiagnosticSeverity.Hint,
+        source: 'kiwi',
+        data: e.errorKind,
+      });
+    }
+
+    for (const def of schema?.definitions ?? []) {
+      if (!isPascalCase(def.name)) {
+        diagnostics.push({
+          message: `${sentenceCase(def.kind)} names should be PascalCase`,
+          range: def.nameSpan,
+          severity: DiagnosticSeverity.Warning,
+          source: 'kiwi',
+          data: { kind: 'change case', newText: pascalCase(def.name) },
+        });
+      }
+
+      if (def.kind === 'ENUM') {
+        for (const field of def.fields) {
+          if (isScreamingSnakeCase(field.name)) {
+            continue;
+          }
+
+          diagnostics.push({
+            message: 'Enum variants should be SCREAMING_SNAKE_CASE',
+            range: field.nameSpan,
+            severity: DiagnosticSeverity.Warning,
+            source: 'kiwi',
+            data: { kind: 'change case', newText: constantCase(field.name) },
+          });
+        }
+      } else {
+        for (const field of def.fields) {
+          if (field.isDeprecated) {
+            diagnostics.push({
+              message: 'Field deprecated',
+              range: field.nameSpan,
+              tags: [DiagnosticTag.Deprecated],
+              severity: DiagnosticSeverity.Hint,
+              source: 'kiwi',
+            });
+          }
+
+          if (!isCamelCase(field.name)) {
+            diagnostics.push({
+              message: 'Field names should be camelCase',
+              range: field.nameSpan,
+              severity: DiagnosticSeverity.Warning,
+              source: 'kiwi',
+              data: { kind: 'change case', newText: camelCase(field.name) },
+            });
+          }
+        }
+      }
+    }
+
+    if (schema?.package && !isPascalCase(schema.package.text)) {
+      diagnostics.push({
+        message: 'Package names should be PascalCase',
+        range: schema.package.span,
+        severity: DiagnosticSeverity.Warning,
+        source: 'kiwi',
+        data: { kind: 'change case', newText: pascalCase(schema.package.text) },
+      });
+    }
+
+    return diagnostics;
+  }
+
+  // 读取所有包含文件的内容
+  let prependContent = '';
+  let prependLines = 0; // 记录拼接内容的行数
+
+  for (const file of includeFiles) {
+    try {
+      const filePath = path.isAbsolute(file) ? file : path.join(workspaceFolder, file);
+      const content = await fs.promises.readFile(filePath, 'utf8');
+      prependContent += content + '\n';
+      prependLines += content.split('\n').length;
+    } catch (error) {
+      connection.console.error(`无法读取包含文件 ${file}: ${error}`);
+    }
+  }
+
+  // 将包含文件的内容拼接到当前文件前
+  const text = prependContent + textDocument.getText();
 
   let schema: Schema | undefined;
   let errors: KiwiParseError[] = [];
@@ -116,25 +285,50 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
     errors.push(e);
   }
 
-  const diagnostics: Diagnostic[] = errors.map((e) => ({
-    message: e.message,
-    range: e.range,
-    relatedInformation:
-      e.relatedInformation && hasDiagnosticRelatedInformationCapability
-        ? [
-          DiagnosticRelatedInformation.create(
+  // 调整诊断信息的位置
+  function adjustRange(range: Range): Range {
+    // 只调整在当前文件范围内的诊断信息
+    if (range.start.line >= prependLines) {
+      return {
+        start: {
+          line: range.start.line - prependLines,
+          character: range.start.character,
+        },
+        end: {
+          line: range.end.line - prependLines,
+          character: range.end.character,
+        },
+      };
+    }
+    // 如果是在拼接内容中的诊断信息，返回一个无效范围
+    return {
+      start: { line: -1, character: 0 },
+      end: { line: -1, character: 0 },
+    };
+  }
+
+  const diagnostics: Diagnostic[] = errors
+    .map((e) => ({
+      message: e.message,
+      range: adjustRange(e.range),
+      relatedInformation:
+        e.relatedInformation && hasDiagnosticRelatedInformationCapability
+          ? [
             {
-              uri: textDocument.uri,
-              range: e.relatedInformation.span,
+              location: {
+                uri: textDocument.uri,
+                range: adjustRange(e.relatedInformation.span),
+              },
+              message: e.relatedInformation.message,
             },
-            e.relatedInformation.message
-          ),
-        ]
-        : undefined,
-    severity: DiagnosticSeverity.Error,
-    source: 'kiwi',
-    data: e.errorKind,
-  }));
+          ]
+          : undefined,
+      severity: DiagnosticSeverity.Error,
+      source: 'kiwi',
+      data: e.errorKind,
+    }))
+    // 过滤掉拼接内容中的诊断信息
+    .filter((d) => d.range.start.line >= 0);
 
   for (const e of errors) {
     if (!e.relatedInformation || !hasDiagnosticRelatedInformationCapability) {
@@ -143,7 +337,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
 
     diagnostics.push({
       message: 'First definition here',
-      range: e.relatedInformation.span,
+      range: adjustRange(e.relatedInformation.span),
       relatedInformation: [
         DiagnosticRelatedInformation.create(
           { uri: textDocument.uri, range: e.range },
@@ -157,10 +351,15 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
   }
 
   for (const def of schema?.definitions ?? []) {
+    // 只处理当前文件中的定义
+    if (def.nameSpan.start.line < prependLines) {
+      continue;
+    }
+
     if (!isPascalCase(def.name)) {
       diagnostics.push({
         message: `${sentenceCase(def.kind)} names should be PascalCase`,
-        range: def.nameSpan,
+        range: adjustRange(def.nameSpan),
         severity: DiagnosticSeverity.Warning,
         source: 'kiwi',
         data: { kind: 'change case', newText: pascalCase(def.name) },
@@ -175,7 +374,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
 
         diagnostics.push({
           message: 'Enum variants should be SCREAMING_SNAKE_CASE',
-          range: field.nameSpan,
+          range: adjustRange(field.nameSpan),
           severity: DiagnosticSeverity.Warning,
           source: 'kiwi',
           data: { kind: 'change case', newText: constantCase(field.name) },
@@ -186,7 +385,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
         if (field.isDeprecated) {
           diagnostics.push({
             message: 'Field deprecated',
-            range: field.nameSpan,
+            range: adjustRange(field.nameSpan),
             tags: [DiagnosticTag.Deprecated],
             severity: DiagnosticSeverity.Hint,
             source: 'kiwi',
@@ -196,7 +395,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
         if (!isCamelCase(field.name)) {
           diagnostics.push({
             message: 'Field names should be camelCase',
-            range: field.nameSpan,
+            range: adjustRange(field.nameSpan),
             severity: DiagnosticSeverity.Warning,
             source: 'kiwi',
             data: { kind: 'change case', newText: camelCase(field.name) },
@@ -206,14 +405,16 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
     }
   }
 
-  if (schema?.package && !isPascalCase(schema.package.text)) {
-    diagnostics.push({
-      message: 'Package names should be PascalCase',
-      range: schema.package.span,
-      severity: DiagnosticSeverity.Warning,
-      source: 'kiwi',
-      data: { kind: 'change case', newText: pascalCase(schema.package.text) },
-    });
+  if (schema?.package && schema.package.span.start.line >= prependLines) {
+    if (!isPascalCase(schema.package.text)) {
+      diagnostics.push({
+        message: 'Package names should be PascalCase',
+        range: adjustRange(schema.package.span),
+        severity: DiagnosticSeverity.Warning,
+        source: 'kiwi',
+        data: { kind: 'change case', newText: pascalCase(schema.package.text) },
+      });
+    }
   }
 
   return diagnostics;

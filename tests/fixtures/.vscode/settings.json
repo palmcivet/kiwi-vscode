@@ -1,0 +1,9 @@
+{
+  "files.associations": {
+    "*.kiwi": "kiwi"
+  },
+  "kiwi-vscode.includeFiles": [
+    "./enum.kiwi",
+    "./package/base.kiwi"
+  ]
+}

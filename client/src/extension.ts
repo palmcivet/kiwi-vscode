@@ -21,16 +21,24 @@ export function activate(context: ExtensionContext) {
     },
   };
 
+  // 获取配置
+  const config = workspace.getConfiguration('kiwi-vscode');
+  const includeFiles = config.get<string[]>('includeFiles') || [];
+
+  // 创建客户端配置
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: 'file', language: 'kiwi' }],
     synchronize: {
-      fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
+      fileEvents: workspace.createFileSystemWatcher('**/*.kiwi'),
+    },
+    initializationOptions: {
+      includeFiles,
     },
   };
 
   client = new LanguageClient(
-    'kiwiLanguageServer',
-    'kiwi Language Server',
+    'kiwivscode',
+    'Kiwi VSCode',
     serverOptions,
     clientOptions
   );

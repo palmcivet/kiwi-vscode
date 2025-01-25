@@ -31,6 +31,7 @@
     "mocha": "^10.3.0",
     "typescript": "^5.3.3"
   },
+  "displayName": "Kiwi VSCode",
   "publisher": "palmcivet",
   "engines": {
     "vscode": "^1.75.0"
@@ -39,18 +40,18 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "lsp configuration",
+      "title": "Kiwi VSCode",
       "properties": {
-        "languageServerExample.trace.server": {
-          "scope": "window",
-          "type": "string",
-          "enum": [
-            "off",
-            "messages",
-            "verbose"
-          ],
-          "default": "off",
-          "description": "Traces the communication between VS Code and the language server."
+        "kiwi-vscode.includeFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": {
+            "default": "List of kiwi files to include during parsing. These files will be concatenated to the beginning of the current file in order. Supports relative paths (relative to workspace) and absolute paths",
+            "zh-cn": "需要在解析时包含的 kiwi 文件列表，这些文件会按顺序拼接到当前文件前部。支持相对路径（相对于工作区）和绝对路径"
+          }
         }
       }
     },
