@@ -5,5 +5,8 @@
   "kiwi-vscode.includeFiles": [
     "./enum.kiwi",
     "./package/base.kiwi"
-  ]
+  ],
+  "[kiwi]": {
+    "editor.defaultFormatter": "palmcivet.kiwi-vscode"
+  }
 }

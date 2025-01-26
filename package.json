@@ -16,10 +16,14 @@
     }
   ],
   "scripts": {
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -b",
+    "postinstall": "cd ./client && npm install && cd ../server && npm install && cd ..",
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -b",
     "watch": "tsc -b -w",
+    "clean": "rimraf ./{client,server}/out",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "npm run build && mocha ./server/out/test",
+    "test:client": "npm run build && node ./client/out/test/run-test",
     "lint": "eslint ./client/src ./server/src --ext .ts,.tsx"
   },
   "devDependencies": {
@@ -28,7 +32,9 @@
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
     "eslint": "^8.57.0",
+    "glob": "^11.0.1",
     "mocha": "^10.3.0",
+    "rimraf": "^6.0.1",
     "typescript": "^5.3.3"
   },
   "displayName": "Kiwi VSCode",
@@ -63,6 +69,13 @@
           ".kiwi"
         ],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "kiwi-vscode.format",
+        "title": "Format Kiwi Document",
+        "category": "Kiwi"
       }
     ],
     "grammars": [

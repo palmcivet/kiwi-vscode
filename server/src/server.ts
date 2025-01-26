@@ -29,21 +29,23 @@ import {
   type CodeActionParams,
   type CodeAction,
   type Range,
+  type DocumentFormattingParams,
 } from 'vscode-languageserver/node';
-import { Position, TextDocument } from 'vscode-languageserver-textdocument';
+import { TextDocument, type Position } from 'vscode-languageserver-textdocument';
 import { camelCase, pascalCase, constantCase, sentenceCase } from 'change-case';
 import * as fs from 'fs';
 import * as path from 'path';
 
 import { nativeTypes, parseSchema, tokenize } from './parser';
-import { Schema, Definition as KiwiDefinition, Field, Token } from './schema';
+import type { Schema, Definition as KiwiDefinition, Field, Token } from './schema';
 import {
-  KiwiParseError,
   isCamelCase,
   isInsideRange,
   isPascalCase,
   isScreamingSnakeCase,
+  type KiwiParseError,
 } from './util';
+import { formatKiwi } from './formatter';
 
 const connection = createConnection(ProposedFeatures.all);
 
@@ -103,6 +105,7 @@ connection.onInitialize((params: InitializeParams) => {
         codeActionKinds: [CodeActionKind.QuickFix],
         resolveProvider: true,
       },
+      documentFormattingProvider: true,
     },
   };
   if (hasWorkspaceFolderCapability) {
@@ -834,6 +837,23 @@ connection.onCompletion(
     }
 
     return toplevelCompletions;
+  }
+);
+
+connection.onDocumentFormatting(
+  async (params: DocumentFormattingParams): Promise<TextEdit[]> => {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) {
+      return [];
+    }
+
+    try {
+      const text = document.getText();
+      return formatKiwi(text);
+    } catch (error) {
+      connection.console.error('格式化过程中出错: ' + error);
+      return [];
+    }
   }
 );
 

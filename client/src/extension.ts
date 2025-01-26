@@ -1,11 +1,18 @@
 import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import {
+  workspace,
+  languages,
+  type ExtensionContext,
+  type TextDocument,
+  type FormattingOptions,
+  type TextEdit,
+} from 'vscode';
 
 import {
   LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
   TransportKind,
+  type LanguageClientOptions,
+  type ServerOptions,
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
@@ -41,6 +48,30 @@ export function activate(context: ExtensionContext) {
     'Kiwi VSCode',
     serverOptions,
     clientOptions
+  );
+
+  client.info('扩展激活');
+  client.info(`服务器模块路径: ${serverModule}`);
+
+  // 注册格式化 Provider
+  context.subscriptions.push(
+    languages.registerDocumentFormattingEditProvider('kiwi', {
+      async provideDocumentFormattingEdits(
+        document: TextDocument,
+        options: FormattingOptions
+      ): Promise<TextEdit[]> {
+        // 委托给语言服务器处理格式化
+        const params = {
+          textDocument: { uri: document.uri.toString() },
+          options,
+        };
+        try {
+          return await client.sendRequest('textDocument/formatting', params);
+        } catch (error) {
+          return [];
+        }
+      },
+    })
   );
 
   client.start();

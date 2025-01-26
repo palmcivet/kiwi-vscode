@@ -1,11 +1,11 @@
-import { Schema, Definition, Field, DefinitionKind, Token } from './schema';
+import type { Schema, Definition, Field, DefinitionKind, Token } from './schema';
 import {
-  KiwiParseError,
   combineRanges,
   createError,
   endOfRange,
   error,
   quote,
+  type KiwiParseError,
 } from './util';
 import { sentenceCase } from 'change-case';
 

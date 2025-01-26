@@ -1,4 +1,4 @@
-import { Position, Range } from 'vscode-languageserver';
+import type { Position, Range } from 'vscode-languageserver';
 
 export function quote(text: string): string {
   return JSON.stringify(text);
