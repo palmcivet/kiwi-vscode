@@ -1,7 +1,12 @@
 .vscode/**
+dist/**
+fixture/**
 **/*.ts
 **/*.map
+**/*.tsbuildinfo
 .gitignore
+.cursorrules
+eslint.config.mjs
 **/tsconfig.json
 client/node_modules/**
 !client/node_modules/vscode-jsonrpc/**

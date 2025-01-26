@@ -1,8 +1,7 @@
 {
   "name": "kiwi-vscode-lsp-server",
-  "description": "Implementation of the LSP server for kiwi in VSCode.",
   "private": true,
-  "version": "1.0.2",
+  "description": "Implementation of the LSP server for kiwi in VSCode.",
   "engines": {
     "node": "*"
   },

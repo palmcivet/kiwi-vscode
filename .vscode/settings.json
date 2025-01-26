@@ -1,7 +1,7 @@
 {
+  "prettier.enable": false,
   "files.eol": "\n",
   "editor.tabSize": 2,
-  "editor.formatOnSave": true,
   "editor.insertSpaces": true,
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "typescript.tsc.autoDetect": "off",
@@ -9,10 +9,11 @@
   "eslint.format.enable": true,
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
-  "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features",
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features",
-  }
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "json",
+    "jsonc",
+    "markdown"
+  ]
 }
