@@ -1,13 +1,15 @@
-import { Schema, Definition, Field, DefinitionKind, Token } from './schema';
+/* eslint-disable ts/no-use-before-define */
+/* eslint-disable no-cond-assign */
+import type { Definition, DefinitionKind, Field, Schema, Token } from './schema';
+import type { KiwiParseError } from './util';
+import { sentenceCase } from 'change-case';
 import {
-  KiwiParseError,
   combineRanges,
   createError,
   endOfRange,
   error,
   quote,
 } from './util';
-import { sentenceCase } from 'change-case';
 
 export const nativeTypes = [
   'bool',
@@ -30,9 +32,9 @@ export const reservedNames = [
   ...nativeTypes,
 ];
 
-const regex =
-  /((?:-|\b)\d+\b|[=;{}]|\[\]|\[deprecated\]|\b[A-Za-z_][A-Za-z0-9_]*\b|\/\/.*|\s+)/g;
-const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const regex
+  = /((?:-|\b)\d+\b|[=;{}]|\[\]|\[deprecated\]|\b[A-Za-z_]\w*\b|\/\/.*|\s+)/g;
+const identifier = /^[A-Z_]\w*$/i;
 const whitespace = /^\/\/.*|\s+$/;
 const equals = /^=$/;
 const endOfFile = /^$/;
@@ -77,13 +79,14 @@ export function tokenize(text: string): [Token[], KiwiParseError[]] {
         createError(`Invalid token: ${quote(part)}`, {
           start: { line, character: column },
           end: { line, character: column + part.length },
-        })
+        }),
       );
     }
 
     // Keep track of the line and column counts
     const lines = part.split('\n');
-    if (lines.length > 1) column = 0;
+    if (lines.length > 1)
+      column = 0;
     line += lines.length - 1;
     column += lines[lines.length - 1].length;
   }
@@ -118,7 +121,7 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
   function expect(test: RegExp, expected: string): Token {
     const token = current();
     if (!eat(test)) {
-      error('Expected ' + expected + ' but found ' + quote(token.text), token.span);
+      error(`Expected ${expected} but found ${quote(token.text)}`, token.span);
     }
 
     return token;
@@ -135,19 +138,21 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
     const packageSemi = eat(semicolon);
     if (packageIdent) {
       if (
-        packageIdent.text === 'enum' ||
-        packageIdent.text === 'struct' ||
-        packageIdent.text === 'message'
+        packageIdent.text === 'enum'
+        || packageIdent.text === 'struct'
+        || packageIdent.text === 'message'
       ) {
         errors.push(
-          createError('Expected package name', endOfRange(packageKeywordToken.span))
+          createError('Expected package name', endOfRange(packageKeywordToken.span)),
         );
         index -= 1;
         packageIdent = null;
-      } else if (!packageSemi) {
+      }
+      else if (!packageSemi) {
         errors.push(createError('Expected ";"', endOfRange(packageIdent.span)));
       }
-    } else {
+    }
+    else {
       errors.push(createError('Expected package name', endOfRange(current().span)));
     }
   }
@@ -157,9 +162,15 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
     let kind: DefinitionKind;
     let kindTok: Token | null;
 
-    if ((kindTok = eat(enumKeyword))) kind = 'ENUM';
-    else if ((kindTok = eat(structKeyword))) kind = 'STRUCT';
-    else if ((kindTok = eat(messageKeyword))) kind = 'MESSAGE';
+    if ((kindTok = eat(enumKeyword))) {
+      kind = 'ENUM';
+    }
+    else if ((kindTok = eat(structKeyword))) {
+      kind = 'STRUCT';
+    }
+    else if ((kindTok = eat(messageKeyword))) {
+      kind = 'MESSAGE';
+    }
     else {
       const tok = current();
       errors.push(createError(`Unexpected token "${tok.text}"`, tok.span));
@@ -175,8 +186,8 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
       errors.push(
         createError(
           `${sentenceCase(kind)} missing name`,
-          combineRanges(kindTok.span, current().span)
-        )
+          combineRanges(kindTok.span, current().span),
+        ),
       );
     }
 
@@ -184,7 +195,7 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
     let closeFieldsBrace: Token | null;
 
     // Parse fields
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
       closeFieldsBrace = eat(rightBrace);
 
@@ -219,21 +230,23 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
         if (!eat(integer)) {
           if (eqError) {
             eqError.message = `Expected id assignment. e.g. \`${
-              type ? type.text + ' ' : ''
+              type ? `${type.text} ` : ''
             }${field.text} = 1\``;
-          } else {
+          }
+          else {
             eqError = createError(
               `Expected integer id. found ${quote(current().text)}`,
-              current().span
+              current().span,
             );
           }
         }
 
         if (eqError) {
           errors.push(eqError);
-        } else if ((+value.text | 0) + '' !== value.text) {
+        }
+        else if (`${+value.text | 0}` !== value.text) {
           errors.push(
-            createError('Invalid integer ' + quote(value.text), current().span)
+            createError(`Invalid integer ${quote(value.text)}`, current().span),
           );
         }
       }
@@ -242,16 +255,19 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
       if (eat(deprecatedToken)) {
         if (kind !== 'MESSAGE') {
           errors.push(createError('Can only deprecate message fields', deprecated.span));
-        } else {
+        }
+        else {
           isDeprecated = true;
         }
-      } else if (kind !== 'ENUM') {
+      }
+      else if (kind !== 'ENUM') {
         let deprecatedErrorToken = null;
         if ((deprecatedErrorToken = eat(/\[|\]/))) {
           errors.push(createError('Expected `[deprecated]`', deprecatedErrorToken.span));
-        } else if ((deprecatedErrorToken = eat(/deprecated/))) {
+        }
+        else if ((deprecatedErrorToken = eat(/deprecated/))) {
           errors.push(
-            createError('Did you mean `[deprecated]`?', deprecatedErrorToken.span)
+            createError('Did you mean `[deprecated]`?', deprecatedErrorToken.span),
           );
         }
       }
@@ -277,6 +293,7 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
       }
 
       if (name?.text === 'WidgetHoverStyle') {
+        // eslint-disable-next-line no-console
         console.log({ c: current() });
       }
 
@@ -284,7 +301,7 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
         field.span,
         type?.span || field.span,
         value?.span || field.span,
-        semicolonSpan || field.span
+        semicolonSpan || field.span,
       );
 
       fields.push({
@@ -293,8 +310,8 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
         nameSpan: field.span,
         type: type?.text,
         typeSpan: type?.span,
-        isArray: isArray,
-        isDeprecated: isDeprecated,
+        isArray,
+        isDeprecated,
         deprecatedSpan: deprecated.span,
         value: value !== null ? +value.text | 0 : fields.length + 1,
         valueSpan: value?.span || fullSpan,
@@ -310,8 +327,8 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
       defSpan: combineRanges(kindTok.span, closeFieldsBrace.span),
       name: name.text,
       nameSpan: name.span,
-      kind: kind,
-      fields: fields,
+      kind,
+      fields,
       fieldsSpan: combineRanges(openFieldsBrace.span, closeFieldsBrace.span),
     });
   }
@@ -319,7 +336,7 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
   return [
     {
       package: packageIdent,
-      definitions: definitions,
+      definitions,
     },
     errors,
   ];
@@ -328,8 +345,6 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
 function verify(root: Schema): KiwiParseError[] {
   const errors: KiwiParseError[] = [];
 
-  const reservedTypeNames = [...nativeTypes];
-
   const definedTypes = nativeTypes.slice();
   const definitions: { [name: string]: Definition } = {};
 
@@ -337,13 +352,13 @@ function verify(root: Schema): KiwiParseError[] {
   for (let i = 0; i < root.definitions.length; i++) {
     const definition = root.definitions[i];
 
-    const nativeDefinition = nativeTypes.find((v) => v === definition.name);
+    const nativeDefinition = nativeTypes.find(v => v === definition.name);
     if (nativeDefinition) {
       errors.push(
         createError(
-          'The type ' + quote(definition.name) + ' conflicts with a native type',
-          definition.nameSpan
-        )
+          `The type ${quote(definition.name)} conflicts with a native type`,
+          definition.nameSpan,
+        ),
       );
     }
 
@@ -351,21 +366,21 @@ function verify(root: Schema): KiwiParseError[] {
     if (duplicateDefinitionIdx !== -1) {
       errors.push(
         createError(
-          'The type ' + quote(definition.name) + ' is defined twice',
+          `The type ${quote(definition.name)} is defined twice`,
           definition.nameSpan,
           {
             message: 'Also defined here',
             span: definitions[definedTypes[duplicateDefinitionIdx]].nameSpan,
-          }
-        )
+          },
+        ),
       );
     }
-    if (reservedNames.indexOf(definition.name) !== -1) {
+    if (reservedNames.includes(definition.name)) {
       errors.push(
         createError(
-          'The type name ' + quote(definition.name) + ' is reserved',
-          definition.nameSpan
-        )
+          `The type name ${quote(definition.name)} is reserved`,
+          definition.nameSpan,
+        ),
       );
     }
     definedTypes.push(definition.name);
@@ -385,12 +400,12 @@ function verify(root: Schema): KiwiParseError[] {
       // Check types
       for (let j = 0; j < fields.length; j++) {
         const field = fields[j];
-        if (definedTypes.indexOf(field.type!) === -1) {
+        if (!definedTypes.includes(field.type!)) {
           errors.push(
             createError(
-              'The type ' + quote(field.type!) + ' doesn\'t exist.',
-              field.typeSpan!
-            )
+              `The type ${quote(field.type!)} doesn't exist.`,
+              field.typeSpan!,
+            ),
           );
         }
       }
@@ -401,45 +416,47 @@ function verify(root: Schema): KiwiParseError[] {
     for (let j = 0; j < fields.length; j++) {
       const field = fields[j];
 
-      const duplicateName = checkedFields.find((f) => f.name === field.name);
+      const duplicateName = checkedFields.find(f => f.name === field.name);
       if (duplicateName) {
         errors.push(
           createError(
-            'The name for field ' + quote(field.name) + ' is used twice',
+            `The name for field ${quote(field.name)} is used twice`,
             field.nameSpan,
-            { message: 'Also used here', span: duplicateName.nameSpan }
-          )
+            { message: 'Also used here', span: duplicateName.nameSpan },
+          ),
         );
       }
 
-      const duplicateValue = checkedFields.find((f) => f.value === field.value);
+      const duplicateValue = checkedFields.find(f => f.value === field.value);
       let fieldError;
       if (duplicateValue) {
         fieldError = createError(
-          'The id for field ' + quote(field.name) + ' is used twice',
+          `The id for field ${quote(field.name)} is used twice`,
           field.valueSpan,
           { message: 'Also used here', span: duplicateValue.valueSpan },
-          'invalid id'
+          'invalid id',
         );
-      } else if (
-        (definition.kind === 'ENUM' && field.value < 0) ||
-        (definition.kind !== 'ENUM' && field.value <= 0)
+      }
+      else if (
+        (definition.kind === 'ENUM' && field.value < 0)
+        || (definition.kind !== 'ENUM' && field.value <= 0)
       ) {
         fieldError = createError(
-          'The id for field ' + quote(field.name) + ' must be positive',
+          `The id for field ${quote(field.name)} must be positive`,
           field.valueSpan,
           undefined,
-          'invalid id'
+          'invalid id',
         );
-      } else if (definition.kind !== 'ENUM' && field.value > fields.length) {
+      }
+      else if (definition.kind !== 'ENUM' && field.value > fields.length) {
         fieldError = createError(
-          'The id for field ' +
-            quote(field.name) +
-            ' cannot be larger than ' +
-            fields.length,
+          `The id for field ${
+            quote(field.name)
+          } cannot be larger than ${
+            fields.length}`,
           field.valueSpan,
           undefined,
-          'invalid id'
+          'invalid id',
         );
       }
 
@@ -459,9 +476,9 @@ function verify(root: Schema): KiwiParseError[] {
       if (state[name] === 1) {
         errors.push(
           createError(
-            'Recursive nesting of ' + quote(name) + ' is not allowed',
-            definition.nameSpan
-          )
+            `Recursive nesting of ${quote(name)} is not allowed`,
+            definition.nameSpan,
+          ),
         );
       }
       if (state[name] !== 2 && definition) {

@@ -1,41 +1,43 @@
-import {
-  createConnection,
-  TextDocuments,
-  Diagnostic,
-  DiagnosticSeverity,
-  ProposedFeatures,
-  InitializeParams,
-  CompletionItem,
-  CompletionItemKind,
-  TextDocumentPositionParams,
-  TextDocumentSyncKind,
-  InitializeResult,
-  DocumentDiagnosticReportKind,
-  type DocumentDiagnosticReport,
-  DiagnosticRelatedInformation,
-  DefinitionParams,
-  HoverParams,
+import type { Position } from 'vscode-languageserver-textdocument';
+import type {
   CancellationToken,
-  Hover,
-  Definition,
-  ReferenceParams,
-  Location,
-  DocumentSymbolParams,
-  DocumentSymbol,
-  SymbolKind,
-  DiagnosticTag,
-  CodeActionParams,
-  CodeActionKind,
   CodeAction,
+  CodeActionParams,
+  CompletionItem,
+  Definition,
+  DefinitionParams,
+  Diagnostic,
+  DocumentDiagnosticReport,
+  DocumentSymbol,
+  DocumentSymbolParams,
+  Hover,
+  HoverParams,
+  InitializeParams,
+  InitializeResult,
+  Location,
+  ReferenceParams,
+  TextDocumentPositionParams,
+} from 'vscode-languageserver/node';
+import type { Field, Definition as KiwiDefinition, Schema, Token } from './schema';
+import type { KiwiParseError } from './util';
+import { camelCase, constantCase, pascalCase, sentenceCase } from 'change-case';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import {
+  CodeActionKind,
+  CompletionItemKind,
+  createConnection,
+  DiagnosticRelatedInformation,
+  DiagnosticSeverity,
+  DiagnosticTag,
+  DocumentDiagnosticReportKind,
+  ProposedFeatures,
+  SymbolKind,
+  TextDocuments,
+  TextDocumentSyncKind,
   TextEdit,
 } from 'vscode-languageserver/node';
-import { Position, TextDocument } from 'vscode-languageserver-textdocument';
-import { camelCase, pascalCase, constantCase, sentenceCase } from 'change-case';
-
 import { nativeTypes, parseSchema, tokenize } from './parser';
-import { Schema, Definition as KiwiDefinition, Field, Token } from './schema';
 import {
-  KiwiParseError,
   isCamelCase,
   isInsideRange,
   isPascalCase,
@@ -56,9 +58,9 @@ connection.onInitialize((params: InitializeParams) => {
     capabilities.workspace && !!capabilities.workspace.workspaceFolders
   );
   hasDiagnosticRelatedInformationCapability = !!(
-    capabilities.textDocument &&
-    capabilities.textDocument.publishDiagnostics &&
-    capabilities.textDocument.publishDiagnostics.relatedInformation
+    capabilities.textDocument
+    && capabilities.textDocument.publishDiagnostics
+    && capabilities.textDocument.publishDiagnostics.relatedInformation
   );
 
   const result: InitializeResult = {
@@ -97,7 +99,7 @@ connection.languages.diagnostics.on(async (params) => {
   } satisfies DocumentDiagnosticReport;
 });
 
-documents.onDidChangeContent((change) => validateTextDocument(change.document));
+documents.onDidChangeContent(change => validateTextDocument(change.document));
 
 const files: Record<string, Schema> = {};
 
@@ -112,24 +114,25 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
     files[textDocument.uri] = parsed;
     schema = parsed;
     errors = validateErrors;
-  } catch (e: any) {
+  }
+  catch (e: any) {
     errors.push(e);
   }
 
-  const diagnostics: Diagnostic[] = errors.map((e) => ({
+  const diagnostics: Diagnostic[] = errors.map(e => ({
     message: e.message,
     range: e.range,
     relatedInformation:
       e.relatedInformation && hasDiagnosticRelatedInformationCapability
         ? [
-          DiagnosticRelatedInformation.create(
-            {
-              uri: textDocument.uri,
-              range: e.relatedInformation.span,
-            },
-            e.relatedInformation.message
-          ),
-        ]
+            DiagnosticRelatedInformation.create(
+              {
+                uri: textDocument.uri,
+                range: e.relatedInformation.span,
+              },
+              e.relatedInformation.message,
+            ),
+          ]
         : undefined,
     severity: DiagnosticSeverity.Error,
     source: 'kiwi',
@@ -147,7 +150,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
       relatedInformation: [
         DiagnosticRelatedInformation.create(
           { uri: textDocument.uri, range: e.range },
-          'Duplicated here'
+          'Duplicated here',
         ),
       ],
       severity: DiagnosticSeverity.Hint,
@@ -181,7 +184,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
           data: { kind: 'change case', newText: constantCase(field.name) },
         });
       }
-    } else {
+    }
+    else {
       for (const field of def.fields) {
         if (field.isDeprecated) {
           diagnostics.push({
@@ -241,9 +245,10 @@ const KEYWORD_DOCS: Record<string, string> = {
 function getSchema(uri: string): Schema | undefined {
   try {
     const document = documents.get(uri);
-    const [parsed, errors] = parseSchema(document!.getText());
+    const [parsed, _errors] = parseSchema(document!.getText());
     files[uri] = parsed;
-  } catch {
+  }
+  catch {
     //
   }
 
@@ -316,12 +321,12 @@ connection.onReferences((params: ReferenceParams): Location[] => {
 
 function findContainingDefinition(
   position: Position,
-  schema: Schema
+  schema: Schema,
 ): KiwiDefinition | undefined {
-  return schema.definitions.find((def) => isInsideRange(position, def.defSpan));
+  return schema.definitions.find(def => isInsideRange(position, def.defSpan));
 }
 
-connection.onHover((params: HoverParams, token: CancellationToken): Hover => {
+connection.onHover((params: HoverParams, _token: CancellationToken): Hover => {
   const schema = getSchema(params.textDocument.uri);
 
   if (!schema) {
@@ -337,7 +342,8 @@ connection.onHover((params: HoverParams, token: CancellationToken): Hover => {
 
     if (def.kind === 'ENUM') {
       notes.push(`${def.fields.length} variants`);
-    } else {
+    }
+    else {
       notes.push(`${def.fields.length} fields | next id ${def.fields.length + 1}`);
     }
 
@@ -386,7 +392,7 @@ connection.onHover((params: HoverParams, token: CancellationToken): Hover => {
   }
 
   if (target) {
-    const def = schema.definitions.find((def) => def.name === target?.type);
+    const def = schema.definitions.find(def => def.name === target?.type);
 
     if (def) {
       return {
@@ -431,7 +437,7 @@ connection.onDefinition((params: DefinitionParams): Definition | undefined => {
     return;
   }
 
-  const def = schema.definitions.find((def) => def.name === tokenInside);
+  const def = schema.definitions.find(def => def.name === tokenInside);
 
   return def && { range: def.nameSpan, uri: params.textDocument.uri };
 });
@@ -480,7 +486,7 @@ function getNextId(def: KiwiDefinition): number | undefined {
     return;
   }
 
-  const usedIds = new Set(def.fields.map((f) => f.value));
+  const usedIds = new Set(def.fields.map(f => f.value));
 
   for (let i = 1; i < def.fields.length; i++) {
     if (!usedIds.has(i)) {
@@ -492,7 +498,7 @@ function getNextId(def: KiwiDefinition): number | undefined {
 }
 
 connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
-  const diagnostics = params.context.diagnostics.filter((d) => !!d.data);
+  const diagnostics = params.context.diagnostics.filter(d => !!d.data);
 
   if (diagnostics.length === 0) {
     return [];
@@ -507,13 +513,13 @@ connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
   const def = findContainingDefinition(params.range.start, schema);
 
   function getNextIdQuickActions() {
-    const nextIdDiagnostics = diagnostics.filter((d) => d.data === 'invalid id');
+    const nextIdDiagnostics = diagnostics.filter(d => d.data === 'invalid id');
 
     if (!def || def.kind !== 'MESSAGE') {
       return [];
     }
 
-    return nextIdDiagnostics.map((diagnostic) => ({
+    return nextIdDiagnostics.map(diagnostic => ({
       title: 'Use next available id',
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
@@ -529,14 +535,14 @@ connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
 
   function getChangeCaseQuickActions() {
     const changeCaseDiagnostics = diagnostics.filter(
-      (d) => d.data?.kind === 'change case'
+      d => d.data?.kind === 'change case',
     );
 
     if (!def) {
       return [];
     }
 
-    return changeCaseDiagnostics.map((diagnostic) => ({
+    return changeCaseDiagnostics.map(diagnostic => ({
       title: 'Change case',
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
@@ -562,11 +568,11 @@ connection.onCompletion(
     }
 
     const typeCompletions = [
-      ...nativeTypes.map((ty) => ({
+      ...nativeTypes.map(ty => ({
         label: ty,
         kind: CompletionItemKind.Field,
       })),
-      ...schema.definitions.map((d) => ({
+      ...schema.definitions.map(d => ({
         label: d.name,
         kind:
           d.kind === 'ENUM'
@@ -577,15 +583,15 @@ connection.onCompletion(
       })),
     ];
 
-    const toplevelCompletions = ['message ', 'struct ', 'enum '].map((kw) => ({
+    const toplevelCompletions = ['message ', 'struct ', 'enum '].map(kw => ({
       label: kw,
       kind: CompletionItemKind.Keyword,
     }));
 
     if (
-      !schema.package &&
-      (schema.definitions.length === 0 ||
-        textDocumentPosition.position.line < schema.definitions[0]!.nameSpan.start.line)
+      !schema.package
+      && (schema.definitions.length === 0
+        || textDocumentPosition.position.line < schema.definitions[0]!.nameSpan.start.line)
     ) {
       toplevelCompletions.push({
         label: 'package ',
@@ -610,8 +616,8 @@ connection.onCompletion(
 
         for (const tok of tokens) {
           if (
-            tok.span.end.line === textDocumentPosition.position.line &&
-            tok.span.end.character === textDocumentPosition.position.character
+            tok.span.end.line === textDocumentPosition.position.line
+            && tok.span.end.character === textDocumentPosition.position.character
           ) {
             break;
           }
@@ -633,7 +639,7 @@ connection.onCompletion(
     }
 
     return toplevelCompletions;
-  }
+  },
 );
 
 documents.listen(connection);

@@ -1,4 +1,4 @@
-import { Position, Range } from 'vscode-languageserver';
+import type { Position, Range } from 'vscode-languageserver';
 
 export function quote(text: string): string {
   return JSON.stringify(text);
@@ -11,7 +11,7 @@ export class KiwiParseError extends Error {
     message: string,
     public readonly range: Range,
     public readonly relatedInformation?: RelatedInformation,
-    public readonly errorKind?: ErrorKind
+    public readonly errorKind?: ErrorKind,
   ) {
     super(message);
   }
@@ -29,13 +29,15 @@ export function combineRanges(...ranges: Range[]) {
   for (const r of ranges) {
     if (r.start.line < start.line) {
       start = { ...r.start };
-    } else if (r.start.line === start.line) {
+    }
+    else if (r.start.line === start.line) {
       start.character = Math.min(start.character, r.start.character);
     }
 
     if (r.end.line > end.line) {
       end = { ...r.end };
-    } else if (r.end.line === end.line) {
+    }
+    else if (r.end.line === end.line) {
       end.character = Math.max(end.character, r.end.character);
     }
   }
@@ -54,7 +56,7 @@ export function endOfRange(range: Range): Range {
 export function error(
   text: string,
   range: Range,
-  relatedInformation?: RelatedInformation
+  relatedInformation?: RelatedInformation,
 ): never {
   throw new KiwiParseError(text, range, relatedInformation);
 }
@@ -63,7 +65,7 @@ export function createError(
   text: string,
   range: Range,
   relatedInformation?: RelatedInformation,
-  errorKind?: ErrorKind
+  errorKind?: ErrorKind,
 ): KiwiParseError {
   return new KiwiParseError(text, range, relatedInformation, errorKind);
 }
@@ -99,8 +101,8 @@ export function isInsideRange(position: Position, range: Range | undefined): boo
 
   if (range.start.line === position.line && range.end.line === position.line) {
     return (
-      range.start.character < position.character &&
-      range.end.character > position.character
+      range.start.character < position.character
+      && range.end.character > position.character
     );
   }
 
