@@ -4,9 +4,11 @@
   },
   "kiwi-vscode.includeFiles": [
     "./enum.kiwi",
-    "./package/base.kiwi"
+    "./package/base-1.kiwi",
+    "./package/base-2.kiwi"
   ],
   "[kiwi]": {
     "editor.defaultFormatter": "palmcivet.kiwi-vscode"
-  }
+  },
+  "kiwi-vscode.formatEnabled": true
 }

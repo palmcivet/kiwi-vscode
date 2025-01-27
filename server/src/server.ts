@@ -55,6 +55,7 @@ let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 let includeFiles: string[] = [];
 let workspaceFolders: string[] = [];
+let formatEnabled: boolean = false;
 
 function uriToPath(uri: string): string {
   let filePath = uri.replace('file://', '');
@@ -84,6 +85,7 @@ connection.onInitialize((params: InitializeParams) => {
 
   // 获取初始化参数中的包含文件列表
   includeFiles = (params.initializationOptions?.includeFiles as string[]) || [];
+  formatEnabled = (params.initializationOptions?.formatEnabled as boolean) || false;
 
   // 获取工作区文件夹
   workspaceFolders =
@@ -847,6 +849,10 @@ connection.onDocumentFormatting(
       return [];
     }
 
+    if (!formatEnabled) {
+      return [];
+    }
+
     try {
       const text = document.getText();
       return formatKiwi(text);
@@ -856,6 +862,11 @@ connection.onDocumentFormatting(
     }
   }
 );
+
+connection.onDidChangeConfiguration(({ settings }) => {
+  formatEnabled = settings?.formatEnabled ?? formatEnabled;
+  includeFiles = settings?.includeFiles ?? includeFiles;
+});
 
 documents.listen(connection);
 connection.listen();

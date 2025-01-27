@@ -55,6 +55,11 @@
           },
           "default": [],
           "description": "List of kiwi files to include during parsing. These files will be concatenated to the beginning of the current file in order. Supports relative paths (relative to workspace) and absolute paths"
+        },
+        "kiwi-vscode.formatEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable/disable formatting support for Kiwi files (Beta)"
         }
       }
     },
@@ -69,13 +74,6 @@
           ".kiwi"
         ],
         "configuration": "./language-configuration.json"
-      }
-    ],
-    "commands": [
-      {
-        "command": "kiwi-vscode.format",
-        "title": "Format Kiwi Document",
-        "category": "Kiwi"
       }
     ],
     "grammars": [

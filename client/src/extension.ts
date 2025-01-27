@@ -31,6 +31,7 @@ export function activate(context: ExtensionContext) {
   // 获取配置
   const config = workspace.getConfiguration('kiwi-vscode');
   const includeFiles = config.get<string[]>('includeFiles') || [];
+  const formatEnabled = config.get<boolean>('formatEnabled') || false;
 
   // 创建客户端配置
   const clientOptions: LanguageClientOptions = {
@@ -40,18 +41,14 @@ export function activate(context: ExtensionContext) {
     },
     initializationOptions: {
       includeFiles,
+      formatEnabled,
     },
   };
 
-  client = new LanguageClient(
-    'kiwivscode',
-    'Kiwi VSCode',
-    serverOptions,
-    clientOptions
-  );
+  client = new LanguageClient('kiwivscode', 'Kiwi VSCode', serverOptions, clientOptions);
 
-  client.info('扩展激活');
-  client.info(`服务器模块路径: ${serverModule}`);
+  client.info('Starting Kiwi LSP');
+  client.info(`Server module location: ${serverModule}`);
 
   // 注册格式化 Provider
   context.subscriptions.push(
@@ -71,6 +68,18 @@ export function activate(context: ExtensionContext) {
           return [];
         }
       },
+    })
+  );
+
+  // 添加配置变更监听
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('kiwi-vscode')) {
+        // 通知服务端配置已更新
+        client.sendNotification('workspace/didChangeConfiguration', {
+          settings: workspace.getConfiguration('kiwi-vscode'),
+        });
+      }
     })
   );
 
