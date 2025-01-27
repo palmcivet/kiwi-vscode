@@ -1,48 +1,26 @@
 {
+  "publisher": "palmcivet",
   "name": "kiwi-vscode",
-  "description": "Better support for the Kiwi message format in VSCode.",
-  "private": true,
-  "license": "MIT",
+  "displayName": "Kiwi VSCode",
   "version": "1.0.3",
+  "private": true,
+  "description": "Better support for the Kiwi message format in VSCode.",
   "author": "Palm Civet",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/palmcivet/kiwi-vscode"
-  },
   "contributors": [
     {
       "name": "Connor Skees",
       "url": "https://github.com/connorskees"
     }
   ],
-  "scripts": {
-    "postinstall": "cd ./client && npm install && cd ../server && npm install && cd ..",
-    "vscode:prepublish": "npm run build",
-    "build": "tsc -b",
-    "watch": "tsc -b -w",
-    "clean": "rimraf ./{client,server}/out",
-    "test": "npm run test:server && npm run test:client",
-    "test:server": "npm run build && mocha ./server/out/test",
-    "test:client": "npm run build && node ./client/out/test/run-test",
-    "lint": "eslint ./client/src ./server/src --ext .ts,.tsx"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/palmcivet/kiwi-vscode"
   },
-  "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^18.14.6",
-    "@typescript-eslint/eslint-plugin": "^7.1.0",
-    "@typescript-eslint/parser": "^7.1.0",
-    "eslint": "^8.57.0",
-    "glob": "^11.0.1",
-    "mocha": "^10.3.0",
-    "rimraf": "^6.0.1",
-    "typescript": "^5.3.3"
-  },
-  "displayName": "Kiwi VSCode",
-  "publisher": "palmcivet",
+  "main": "./client/out/extension",
   "engines": {
     "vscode": "^1.75.0"
   },
-  "main": "./client/out/extension",
   "contributes": {
     "configuration": {
       "type": "object",
@@ -83,5 +61,26 @@
         "path": "./syntaxes/kiwi.tmLanguage.json"
       }
     ]
+  },
+  "scripts": {
+    "postinstall": "cd ./client && npm install && cd ../server && npm install && cd ..",
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -b",
+    "watch": "tsc -b -w",
+    "clean": "rimraf ./{client,server}/out",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "npm run build && mocha ./server/out/test",
+    "test:client": "npm run build && node ./client/out/test/run-test",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^4.1.1",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^18.14.6",
+    "eslint": "^9.0.0",
+    "glob": "^11.0.1",
+    "mocha": "^10.3.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.3.3"
   }
 }

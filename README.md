@@ -17,6 +17,20 @@ Building on this, the following features have been added:
 
 - Support for splitting `.kiwi` files based on business requirements, with proper dependency recognition via the `kiwi-vscode.includeFiles` setting
 
+## Example
+
+See the fixture/ folder.
+
+The dependencies are as follows: `package/derived.kiwi` depends on `enum.kiwi`, `package/base-1.kiwi`, and `package/base-2.kiwi`. `derived.kiwi` uses types from `enum.kiwi`, and during parsing, `enum.kiwi` is prepended to `derived.kiwi`.
+
+```
+enum.kiwi              \
+package/base-1.kiwi ----> package/derived.kiwi
+package/base-2.kiwi    /
+```
+
+By configuring the `kiwi-vscode.includeFiles`, dependencies can be added in order during parsing.
+
 ## Credits
 
 - [Cursor](https://www.cursor.com/)

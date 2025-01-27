@@ -1,19 +1,8 @@
-import * as path from 'path';
-import {
-  workspace,
-  languages,
-  type ExtensionContext,
-  type TextDocument,
-  type FormattingOptions,
-  type TextEdit,
-} from 'vscode';
-
-import {
-  LanguageClient,
-  TransportKind,
-  type LanguageClientOptions,
-  type ServerOptions,
-} from 'vscode-languageclient/node';
+import type { ExtensionContext, FormattingOptions, TextDocument, TextEdit } from 'vscode';
+import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import * as path from 'node:path';
+import { languages, workspace } from 'vscode';
+import { LanguageClient, TransportKind } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
@@ -55,7 +44,7 @@ export function activate(context: ExtensionContext) {
     languages.registerDocumentFormattingEditProvider('kiwi', {
       async provideDocumentFormattingEdits(
         document: TextDocument,
-        options: FormattingOptions
+        options: FormattingOptions,
       ): Promise<TextEdit[]> {
         // 委托给语言服务器处理格式化
         const params = {
@@ -64,11 +53,13 @@ export function activate(context: ExtensionContext) {
         };
         try {
           return await client.sendRequest('textDocument/formatting', params);
-        } catch (error) {
+        }
+        // eslint-disable-next-line unused-imports/no-unused-vars
+        catch (error) {
           return [];
         }
       },
-    })
+    }),
   );
 
   // 添加配置变更监听
@@ -80,7 +71,7 @@ export function activate(context: ExtensionContext) {
           settings: workspace.getConfiguration('kiwi-vscode'),
         });
       }
-    })
+    }),
   );
 
   client.start();
