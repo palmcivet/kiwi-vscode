@@ -1,0 +1,28 @@
+// extra spaces
+
+message Vector {
+  float x = 1;
+  float y = 2;
+}
+
+message Rect {
+  float x = 1;  //  comment
+  float y = 2;
+    float w = 3;/// comment
+  float h = 4;
+ }
+
+
+
+// comment line
+message Drag {
+    uint id = 1;
+  Vector point = 2;
+
+     Rect Area = 3;
+
+  Vector wordVec = 4;
+
+}
+
+// extra spaces

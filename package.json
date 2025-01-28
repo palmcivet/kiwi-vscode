@@ -23,12 +23,6 @@
   },
   "activationEvents": [],
   "contributes": {
-    "configuration": {
-      "type": "object",
-      "title": "Kiwi VSCode",
-      "properties": {
-      }
-    },
     "languages": [
       {
         "id": "kiwi",

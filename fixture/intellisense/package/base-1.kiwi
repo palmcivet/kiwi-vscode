@@ -1,9 +1,11 @@
 
+/// @include "../enum.kiwi"
 
 message Vector {
   float x = 1;
   float y = 2;
 }
+
 
 message Rect {
   float x = 1;

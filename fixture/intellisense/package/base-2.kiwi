@@ -1,0 +1,12 @@
+
+// @include "./base-1.kiwi"
+// invalid include
+
+message Vec {
+  float x = 1;
+  float y = 2;
+}
+
+message Sum {
+  int point_one = 1;
+}

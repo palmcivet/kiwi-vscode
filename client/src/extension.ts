@@ -1,10 +1,9 @@
-import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
-
+import type { ExtensionContext } from 'vscode';
+import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import * as path from 'node:path';
+import { workspace } from 'vscode';
 import {
   LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
   TransportKind,
 } from 'vscode-languageclient/node';
 
@@ -29,10 +28,10 @@ export function activate(context: ExtensionContext) {
   };
 
   client = new LanguageClient(
-    'kiwiLanguageServer',
-    'kiwi Language Server',
+    'KiwiLanguageServer',
+    'Kiwi Language Server',
     serverOptions,
-    clientOptions
+    clientOptions,
   );
 
   client.start();

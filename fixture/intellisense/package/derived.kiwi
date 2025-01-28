@@ -1,30 +1,26 @@
+/// @include ../enum.kiwi
+/// @include "./base-1.kiwi"
+/// @include './base-2.kiwi'
 
 message ChangeSet {
   Axis axis = 1;
   Access access = 2;
   NodePhase nodePhase = 3;
-  WindingRule windingRule = 4;
+  WindingRule winding_rule = 4;
+
   TextDecorationStyle textDecorationStyle = 5;
   LeadingTrim leadingTrim = 6;
   NumberUnits numberUnits = 7;
   Viewport viewport = 8;
+
   Vector offset = 9;
 }
 
-
-
-
-
 // comment line
 message Drag {
-    uint id = 1;
-  Vector point = 2; // comment
-
-     Rect Area = 3;
-
+  uint id = 1;
+  Rect Area = 2;
+  Vec wordVec = 3;   // comment
   NumberUnits press_strength = 4;
-  Vec wordVec = 5;
-
+  Vect point = 5;
 }
-
-
