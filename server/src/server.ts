@@ -15,6 +15,7 @@ import type {
   InitializeParams,
   InitializeResult,
   Location,
+  Range,
   ReferenceParams,
   TextDocumentPositionParams,
 } from 'vscode-languageserver/node';
@@ -43,6 +44,10 @@ import {
   isPascalCase,
   isScreamingSnakeCase,
 } from './util';
+import { parseIncludes } from './util';
+import * as path from 'path';
+import { readKiwiFile, uriToFilePath, isPositionInFile, convertPosition } from './util';
+import * as fs from 'fs';
 
 const connection = createConnection(ProposedFeatures.all);
 
@@ -104,119 +109,175 @@ documents.onDidChangeContent(change => validateTextDocument(change.document));
 const files: Record<string, Schema> = {};
 
 async function validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
-  const text = textDocument.getText();
+  const filePath = uriToFilePath(textDocument.uri);
+  const { content: combinedText, filePositions } = readKiwiFile(filePath);
 
   let schema: Schema | undefined;
   let errors: KiwiParseError[] = [];
 
   try {
-    const [parsed, validateErrors] = parseSchema(text);
+    const [parsed, validateErrors] = parseSchema(combinedText);
     files[textDocument.uri] = parsed;
     schema = parsed;
     errors = validateErrors;
-  }
-  catch (e: any) {
+  } catch (e: any) {
     errors.push(e);
   }
 
-  const diagnostics: Diagnostic[] = errors.map(e => ({
-    message: e.message,
-    range: e.range,
-    relatedInformation:
-      e.relatedInformation && hasDiagnosticRelatedInformationCapability
-        ? [
-            DiagnosticRelatedInformation.create(
-              {
-                uri: textDocument.uri,
-                range: e.relatedInformation.span,
-              },
-              e.relatedInformation.message,
-            ),
-          ]
-        : undefined,
-    severity: DiagnosticSeverity.Error,
-    source: 'kiwi',
-    data: e.errorKind,
-  }));
+  // 过滤并调整诊断信息
+  const diagnostics: Diagnostic[] = errors
+    .filter(e => {
+      // 只保留当前文件的错误
+      return isPositionInFile(e.range.start.line, filePath, filePositions);
+    })
+    .map(e => {
+      // 调整错误范围到原始文件中的位置
+      const adjustedRange = {
+        start: {
+          line: convertPosition(e.range.start.line, filePath, filePositions),
+          character: e.range.start.character
+        },
+        end: {
+          line: convertPosition(e.range.end.line, filePath, filePositions),
+          character: e.range.end.character
+        }
+      };
 
+      return {
+        message: e.message,
+        range: adjustedRange,
+        relatedInformation: e.relatedInformation && hasDiagnosticRelatedInformationCapability
+          ? [DiagnosticRelatedInformation.create(
+              { uri: textDocument.uri, range: adjustedRange },
+              e.relatedInformation.message
+            )]
+          : undefined,
+        severity: DiagnosticSeverity.Error,
+        source: 'kiwi',
+        data: e.errorKind,
+      };
+    });
+
+  // 添加样式诊断
+  if (schema) {
+    for (const def of schema.definitions) {
+      // 跳过非当前文件的定义
+      if (!isPositionInFile(def.nameSpan.start.line, filePath, filePositions)) {
+        continue;
+      }
+
+      // 调整定义的位置
+      const adjustedNameSpan = {
+        start: {
+          line: convertPosition(def.nameSpan.start.line, filePath, filePositions),
+          character: def.nameSpan.start.character
+        },
+        end: {
+          line: convertPosition(def.nameSpan.end.line, filePath, filePositions),
+          character: def.nameSpan.end.character
+        }
+      };
+
+      if (!isPascalCase(def.name)) {
+        diagnostics.push({
+          message: `${sentenceCase(def.kind)} names should be PascalCase`,
+          range: adjustedNameSpan,
+          severity: DiagnosticSeverity.Warning,
+          source: 'kiwi',
+          data: { kind: 'change case', newText: pascalCase(def.name) },
+        });
+      }
+
+      if (def.kind === 'ENUM') {
+        for (const field of def.fields) {
+          if (isScreamingSnakeCase(field.name)) {
+            continue;
+          }
+
+          diagnostics.push({
+            message: 'Enum variants should be SCREAMING_SNAKE_CASE',
+            range: field.nameSpan,
+            severity: DiagnosticSeverity.Warning,
+            source: 'kiwi',
+            data: { kind: 'change case', newText: constantCase(field.name) },
+          });
+        }
+      }
+      else {
+        for (const field of def.fields) {
+          // 调整字段位置
+          const adjustedFieldSpan = {
+            start: {
+              line: convertPosition(field.nameSpan.start.line, filePath, filePositions),
+              character: field.nameSpan.start.character
+            },
+            end: {
+              line: convertPosition(field.nameSpan.end.line, filePath, filePositions),
+              character: field.nameSpan.end.character
+            }
+          };
+
+          if (field.isDeprecated) {
+            diagnostics.push({
+              message: 'Field deprecated',
+              range: adjustedFieldSpan,
+              tags: [DiagnosticTag.Deprecated],
+              severity: DiagnosticSeverity.Hint,
+              source: 'kiwi',
+            });
+          }
+
+          if (!isCamelCase(field.name)) {
+            diagnostics.push({
+              message: 'Field names should be camelCase',
+              range: adjustedFieldSpan,
+              severity: DiagnosticSeverity.Warning,
+              source: 'kiwi',
+              data: { kind: 'change case', newText: camelCase(field.name) },
+            });
+          }
+        }
+      }
+    }
+
+    if (schema.package && !isPascalCase(schema.package.text)) {
+      diagnostics.push({
+        message: 'Package names should be PascalCase',
+        range: schema.package.span,
+        severity: DiagnosticSeverity.Warning,
+        source: 'kiwi',
+        data: { kind: 'change case', newText: pascalCase(schema.package.text) },
+      });
+    }
+  }
+
+  // 处理重复定义的相关信息
   for (const e of errors) {
     if (!e.relatedInformation || !hasDiagnosticRelatedInformationCapability) {
       continue;
     }
 
+    const adjustedRange = {
+      start: {
+        line: convertPosition(e.range.start.line, filePath, filePositions),
+        character: e.range.start.character
+      },
+      end: {
+        line: convertPosition(e.range.end.line, filePath, filePositions),
+        character: e.range.end.character
+      }
+    };
+
     diagnostics.push({
       message: 'First definition here',
       range: e.relatedInformation.span,
-      relatedInformation: [
-        DiagnosticRelatedInformation.create(
-          { uri: textDocument.uri, range: e.range },
-          'Duplicated here',
-        ),
-      ],
+      relatedInformation: [DiagnosticRelatedInformation.create(
+        { uri: textDocument.uri, range: adjustedRange },
+        'Duplicated here'
+      )],
       severity: DiagnosticSeverity.Hint,
       source: 'kiwi',
       data: e.errorKind,
-    });
-  }
-
-  for (const def of schema?.definitions ?? []) {
-    if (!isPascalCase(def.name)) {
-      diagnostics.push({
-        message: `${sentenceCase(def.kind)} names should be PascalCase`,
-        range: def.nameSpan,
-        severity: DiagnosticSeverity.Warning,
-        source: 'kiwi',
-        data: { kind: 'change case', newText: pascalCase(def.name) },
-      });
-    }
-
-    if (def.kind === 'ENUM') {
-      for (const field of def.fields) {
-        if (isScreamingSnakeCase(field.name)) {
-          continue;
-        }
-
-        diagnostics.push({
-          message: 'Enum variants should be SCREAMING_SNAKE_CASE',
-          range: field.nameSpan,
-          severity: DiagnosticSeverity.Warning,
-          source: 'kiwi',
-          data: { kind: 'change case', newText: constantCase(field.name) },
-        });
-      }
-    }
-    else {
-      for (const field of def.fields) {
-        if (field.isDeprecated) {
-          diagnostics.push({
-            message: 'Field deprecated',
-            range: field.nameSpan,
-            tags: [DiagnosticTag.Deprecated],
-            severity: DiagnosticSeverity.Hint,
-            source: 'kiwi',
-          });
-        }
-
-        if (!isCamelCase(field.name)) {
-          diagnostics.push({
-            message: 'Field names should be camelCase',
-            range: field.nameSpan,
-            severity: DiagnosticSeverity.Warning,
-            source: 'kiwi',
-            data: { kind: 'change case', newText: camelCase(field.name) },
-          });
-        }
-      }
-    }
-  }
-
-  if (schema?.package && !isPascalCase(schema.package.text)) {
-    diagnostics.push({
-      message: 'Package names should be PascalCase',
-      range: schema.package.span,
-      severity: DiagnosticSeverity.Warning,
-      source: 'kiwi',
-      data: { kind: 'change case', newText: pascalCase(schema.package.text) },
     });
   }
 
@@ -405,42 +466,136 @@ connection.onHover((params: HoverParams, _token: CancellationToken): Hover => {
   return { contents: [] };
 });
 
-connection.onDefinition((params: DefinitionParams): Definition | undefined => {
+connection.onDefinition((params: DefinitionParams): Definition | null => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) {
+    return null;
+  }
+
+  const filePath = uriToFilePath(document.uri);
+  const text = document.getText();
+  const includes = parseIncludes(text);
+
+  // 首先检查是否点击的是 include 路径
+  for (const include of includes) {
+    if (isPositionInRange(params.position, include.pathRange)) {
+      const currentDir = path.dirname(filePath);
+      const targetPath = path.resolve(currentDir, include.path);
+
+      connection.console.log(`Resolving include from ${document.uri} to ${targetPath}`);
+
+      return {
+        uri: pathToFileURL(targetPath),
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }
+      };
+    }
+  }
+
+  // 处理类型定义的跳转
+  const { content: combinedText, filePositions } = readKiwiFile(filePath);
   const schema = getSchema(params.textDocument.uri);
 
   if (!schema) {
-    return;
+    return null;
   }
 
-  let tokenInside: string | undefined;
-
-  const containingDef = findContainingDefinition(params.position, schema);
-
-  if (!containingDef) {
-    return;
+  // 找到点击位置所在的定义
+  const clickedDef = findContainingDefinition(params.position, schema);
+  if (!clickedDef) {
+    return null;
   }
 
-  if (isInsideRange(params.position, containingDef.nameSpan)) {
-    return { uri: params.textDocument.uri, range: containingDef.nameSpan };
-  }
+  // 如果点击的是字段类型
+  for (const field of clickedDef.fields) {
+    if (isInsideRange(params.position, field.typeSpan)) {
+      // 收集所有相关文件的 Schema
+      const allSchemas = new Map<string, Schema>();
 
-  if (isInsideRange(params.position, containingDef.fieldsSpan)) {
-    for (const field of containingDef.fields) {
-      if (isInsideRange(params.position, field.typeSpan)) {
-        tokenInside = field.type;
-        break;
+      // 加载当前文件及其所有依赖
+      allSchemas.set(filePath, schema);
+      const includedSchemas = loadIncludedSchemas(filePath);
+      for (const [path, schema] of includedSchemas) {
+        allSchemas.set(path, schema);
+      }
+
+      // 在所有相关文件中查找类型定义
+      for (const [schemaPath, fileSchema] of allSchemas) {
+        const targetDef = fileSchema.definitions.find(def => def.name === field.type);
+        if (!targetDef) continue;
+
+        connection.console.log(
+          `Found definition of ${field.type} in ${schemaPath} at line ${targetDef.nameSpan.start.line}`
+        );
+
+        // 不需要转换位置，因为我们使用原始文件中的位置
+        return {
+          uri: pathToFileURL(schemaPath),
+          range: targetDef.nameSpan
+        };
       }
     }
   }
 
-  if (!tokenInside) {
-    return;
+  return null;
+});
+
+/**
+ * 递归加载文件的所有依赖
+ */
+function loadIncludedSchemas(filePath: string): Map<string, Schema> {
+  const schemas = new Map<string, Schema>();
+  const visited = new Set<string>();
+
+  function load(currentPath: string) {
+    if (visited.has(currentPath)) return;
+    visited.add(currentPath);
+
+    try {
+      const content = fs.readFileSync(currentPath, 'utf8');
+      const [schema, _] = parseSchema(content);
+      schemas.set(currentPath, schema);
+
+      // 处理该文件的 includes
+      const includes = parseIncludes(content);
+      for (const include of includes) {
+        const includePath = path.resolve(path.dirname(currentPath), include.path);
+        load(includePath);
+      }
+    } catch (error) {
+      connection.console.error(`Error loading schema from ${currentPath}: ${error}`);
+    }
   }
 
-  const def = schema.definitions.find(def => def.name === tokenInside);
+  load(filePath);
+  return schemas;
+}
 
-  return def && { range: def.nameSpan, uri: params.textDocument.uri };
-});
+/**
+ * 从文件路径获取 Schema
+ */
+function getSchemaFromPath(filePath: string): Schema | undefined {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const [parsed, _] = parseSchema(content);
+    return parsed;
+  } catch (error) {
+    connection.console.error(`Error parsing schema from ${filePath}: ${error}`);
+    return undefined;
+  }
+}
+
+// Helper functions
+function isPositionInRange(position: Position, range: Range): boolean {
+  if (position.line !== range.start.line) return false;
+  return position.character >= range.start.character &&
+         position.character <= range.end.character;
+}
+
+function pathToFileURL(filePath: string): string {
+  // 确保路径使用正斜杠
+  const normalizedPath = filePath.replace(/\\/g, '/');
+  return `file://${normalizedPath}`;
+}
 
 connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => {
   const schema = getSchema(params.textDocument.uri);
