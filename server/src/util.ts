@@ -96,26 +96,30 @@ export function isScreamingSnakeCase(s: string): boolean {
   return true;
 }
 
+/**
+ * 判断一个位置是否在范围内
+ */
 export function isInsideRange(position: Position, range: Range | undefined): boolean {
-  if (!range || range.start.line > position.line || range.end.line < position.line) {
+  if (!range) {
     return false;
   }
 
-  if (range.start.line === position.line && range.end.line === position.line) {
-    return (
-      range.start.character < position.character
-      && range.end.character > position.character
-    );
+  // 如果位置在范围的起始行之前或结束行之后，直接返回 false
+  if (position.line < range.start.line || position.line > range.end.line) {
+    return false;
   }
 
-  if (range.start.line === position.line) {
-    return range.start.character < position.character;
+  // 如果位置在起始行
+  if (position.line === range.start.line) {
+    return position.character >= range.start.character;
   }
 
-  if (range.end.line === position.line) {
-    return range.end.character > position.character;
+  // 如果位置在结束行
+  if (position.line === range.end.line) {
+    return position.character <= range.end.character;
   }
 
+  // 位置在范围的中间行
   return true;
 }
 
@@ -241,7 +245,7 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
 
     return { content: finalContent, filePositions };
   } catch (error) {
-    console.error(`Error reading kiwi file ${filePath}:`, error);
+    console.error(`Error reading kiwi file ${filePath}: ${error}`);
     return { content: '', filePositions: [] };
   }
 }
@@ -276,7 +280,7 @@ export function convertPosition(
 }
 
 /**
- * Converts a file URI to a file path
+ * 将文件 URI 转换为文件路径
  */
 export function uriToFilePath(uri: string): string {
   return uri.startsWith('file://') ? uri.slice(7) : uri;
