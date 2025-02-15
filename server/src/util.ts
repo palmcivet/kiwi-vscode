@@ -1,6 +1,6 @@
 import type { Position, Range } from 'vscode-languageserver';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export function quote(text: string): string {
   return JSON.stringify(text);
@@ -147,9 +147,11 @@ export function parseIncludes(text: string): IncludeDirective[] {
     const line = lines[i].trim();
 
     // Skip empty lines
-    if (!line) continue;
+    if (!line)
+      continue;
 
     // Check for include directive
+    // eslint-disable-next-line regexp/no-super-linear-backtracking
     const match = line.match(/^\/\/\/\s*@include\s+(['"]?)([^'"]+)\1$/);
     if (!match) {
       // Hit non-include content, stop parsing
@@ -164,12 +166,12 @@ export function parseIncludes(text: string): IncludeDirective[] {
       path,
       range: {
         start: { line: i, character: startChar },
-        end: { line: i, character: startChar + fullMatch.length }
+        end: { line: i, character: startChar + fullMatch.length },
       },
       pathRange: {
         start: { line: i, character: pathStart },
-        end: { line: i, character: pathStart + path.length }
-      }
+        end: { line: i, character: pathStart + path.length },
+      },
     });
   }
 
@@ -177,7 +179,7 @@ export function parseIncludes(text: string): IncludeDirective[] {
 }
 
 // 添加新的接口来跟踪文件内容的位置信息
-interface FilePosition {
+export interface FilePosition {
   /** 文件路径 */
   filePath: string;
   /** 在合并内容中的起始行 */
@@ -205,7 +207,7 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
     const filePositions: FilePosition[] = [];
 
     // 处理所有 includes
-    const includedResults = includes.map(include => {
+    const includedResults = includes.map((include) => {
       const includePath = path.resolve(path.dirname(filePath), include.path);
       return readKiwiFile(includePath, visitedFiles);
     });
@@ -215,7 +217,7 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
       if (result.content) {
         filePositions.push(...result.filePositions.map(pos => ({
           ...pos,
-          startLine: pos.startLine + currentLine
+          startLine: pos.startLine + currentLine,
         })));
         currentLine += result.content.split('\n').length;
       }
@@ -227,24 +229,25 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
 
     // 创建一个新的内容数组，保留 include 指令的空行
     const contentLines = lines.map((line, index) =>
-      includeLines.has(index) ? '' : line
+      includeLines.has(index) ? '' : line,
     );
 
     // 记录当前文件的位置信息，包括所有行（包括 include 指令的行）
     filePositions.push({
       filePath,
       startLine: currentLine,
-      lineCount: lines.length // 使用原始行数，包括 include 指令
+      lineCount: lines.length, // 使用原始行数，包括 include 指令
     });
 
     // 合并所有内容
     const finalContent = [
       ...includedResults.map(r => r.content),
-      contentLines.join('\n')
+      contentLines.join('\n'),
     ].join('\n');
 
     return { content: finalContent, filePositions };
-  } catch (error) {
+  }
+  catch (error) {
     console.error(`Error reading kiwi file ${filePath}: ${error}`);
     return { content: '', filePositions: [] };
   }
@@ -256,13 +259,14 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
 export function isPositionInFile(
   position: number,
   filePath: string,
-  filePositions: FilePosition[]
+  filePositions: FilePosition[],
 ): boolean {
   const filePos = filePositions.find(pos => pos.filePath === filePath);
-  if (!filePos) return false;
+  if (!filePos)
+    return false;
 
-  return position >= filePos.startLine &&
-         position < filePos.startLine + filePos.lineCount;
+  return position >= filePos.startLine
+    && position < filePos.startLine + filePos.lineCount;
 }
 
 /**
@@ -271,10 +275,11 @@ export function isPositionInFile(
 export function convertPosition(
   position: number,
   filePath: string,
-  filePositions: FilePosition[]
+  filePositions: FilePosition[],
 ): number {
   const filePos = filePositions.find(pos => pos.filePath === filePath);
-  if (!filePos) return position;
+  if (!filePos)
+    return position;
 
   return position - filePos.startLine;
 }

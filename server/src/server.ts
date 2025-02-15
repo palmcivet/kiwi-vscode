@@ -19,8 +19,10 @@ import type {
   ReferenceParams,
   TextDocumentPositionParams,
 } from 'vscode-languageserver/node';
-import type { Field, Definition as KiwiDefinition, Schema, Token } from './schema';
-import type { KiwiParseError } from './util';
+import type { Field, Definition as KiwiDefinition, Schema } from './schema';
+import type { FilePosition, KiwiParseError } from './util';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { camelCase, constantCase, pascalCase, sentenceCase } from 'change-case';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
@@ -37,17 +39,18 @@ import {
   TextDocumentSyncKind,
   TextEdit,
 } from 'vscode-languageserver/node';
-import { nativeTypes, parseSchema, tokenize } from './parser';
+import { nativeTypes, parseSchema } from './parser';
 import {
+  convertPosition,
   isCamelCase,
   isInsideRange,
   isPascalCase,
+  isPositionInFile,
   isScreamingSnakeCase,
+  parseIncludes,
+  readKiwiFile,
+  uriToFilePath,
 } from './util';
-import { parseIncludes } from './util';
-import * as path from 'path';
-import { readKiwiFile, uriToFilePath, isPositionInFile, convertPosition } from './util';
-import * as fs from 'fs';
 
 const connection = createConnection(ProposedFeatures.all);
 
@@ -120,27 +123,28 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
     files[textDocument.uri] = parsed;
     schema = parsed;
     errors = validateErrors;
-  } catch (e: any) {
+  }
+  catch (e: any) {
     errors.push(e);
   }
 
   // 过滤并调整诊断信息
   const diagnostics: Diagnostic[] = errors
-    .filter(e => {
+    .filter((e) => {
       // 只保留当前文件的错误
       return isPositionInFile(e.range.start.line, filePath, filePositions);
     })
-    .map(e => {
+    .map((e) => {
       // 调整错误范围到原始文件中的位置
       const adjustedRange = {
         start: {
           line: convertPosition(e.range.start.line, filePath, filePositions),
-          character: e.range.start.character
+          character: e.range.start.character,
         },
         end: {
           line: convertPosition(e.range.end.line, filePath, filePositions),
-          character: e.range.end.character
-        }
+          character: e.range.end.character,
+        },
       };
 
       return {
@@ -149,7 +153,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
         relatedInformation: e.relatedInformation && hasDiagnosticRelatedInformationCapability
           ? [DiagnosticRelatedInformation.create(
               { uri: textDocument.uri, range: adjustedRange },
-              e.relatedInformation.message
+              e.relatedInformation.message,
             )]
           : undefined,
         severity: DiagnosticSeverity.Error,
@@ -170,12 +174,12 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
       const adjustedNameSpan = {
         start: {
           line: convertPosition(def.nameSpan.start.line, filePath, filePositions),
-          character: def.nameSpan.start.character
+          character: def.nameSpan.start.character,
         },
         end: {
           line: convertPosition(def.nameSpan.end.line, filePath, filePositions),
-          character: def.nameSpan.end.character
-        }
+          character: def.nameSpan.end.character,
+        },
       };
 
       if (!isPascalCase(def.name)) {
@@ -209,12 +213,12 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
           const adjustedFieldSpan = {
             start: {
               line: convertPosition(field.nameSpan.start.line, filePath, filePositions),
-              character: field.nameSpan.start.character
+              character: field.nameSpan.start.character,
             },
             end: {
               line: convertPosition(field.nameSpan.end.line, filePath, filePositions),
-              character: field.nameSpan.end.character
-            }
+              character: field.nameSpan.end.character,
+            },
           };
 
           if (field.isDeprecated) {
@@ -260,12 +264,12 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
     const adjustedRange = {
       start: {
         line: convertPosition(e.range.start.line, filePath, filePositions),
-        character: e.range.start.character
+        character: e.range.start.character,
       },
       end: {
         line: convertPosition(e.range.end.line, filePath, filePositions),
-        character: e.range.end.character
-      }
+        character: e.range.end.character,
+      },
     };
 
     diagnostics.push({
@@ -273,7 +277,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
       range: e.relatedInformation.span,
       relatedInformation: [DiagnosticRelatedInformation.create(
         { uri: textDocument.uri, range: adjustedRange },
-        'Duplicated here'
+        'Duplicated here',
       )],
       severity: DiagnosticSeverity.Hint,
       source: 'kiwi',
@@ -316,69 +320,138 @@ function getSchema(uri: string): Schema | undefined {
   return files[uri];
 }
 
-connection.onReferences((params: ReferenceParams): Location[] => {
-  const locs: Location[] = [];
-
-  const schema = getSchema(params.textDocument.uri);
-
-  if (!schema) {
-    return [];
-  }
-
-  let target: string | undefined;
-  let targetLoc: Location | undefined;
-
-  for (const def of schema.definitions) {
-    if (isInsideRange(params.position, def.nameSpan)) {
-      target = def.name;
-      targetLoc = { uri: params.textDocument.uri, range: def.nameSpan };
-      break;
+connection.onReferences(
+  (params: ReferenceParams): Location[] => {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) {
+      return [];
     }
 
-    if (def.kind === 'ENUM') {
-      continue;
+    const filePath = uriToFilePath(document.uri);
+    connection.console.log(`Finding references in ${filePath} at position ${params.position.line}:${params.position.character}`);
+
+    // 获取当前文件及其所有依赖的 Schema
+    const allSchemas = new Map<string, Schema>();
+    const fileContents = new Map<string, { content: string; filePositions: FilePosition[] }>();
+
+    // 首先加载当前文件
+    const currentFileContent = readKiwiFile(filePath);
+    fileContents.set(filePath, currentFileContent);
+    const schema = getSchema(params.textDocument.uri);
+    if (!schema) {
+      return [];
+    }
+    allSchemas.set(filePath, schema);
+
+    // 加载所有依赖文件
+    const includedSchemas = loadIncludedSchemas(filePath);
+    for (const [path, schema] of includedSchemas) {
+      allSchemas.set(path, schema);
+      const content = readKiwiFile(path);
+      fileContents.set(path, content);
     }
 
-    if (isInsideRange(params.position, def.fieldsSpan)) {
-      for (const field of def.fields) {
-        if (isInsideRange(params.position, field.typeSpan)) {
-          target = field.type;
-          targetLoc = { uri: params.textDocument.uri, range: field.typeSpan! };
+    connection.console.log(`Loaded ${allSchemas.size} schemas for reference search`);
+
+    // 找到点击位置的定义
+    let targetName: string | undefined;
+    let targetLoc: Location | undefined;
+
+    // 检查是否点击在定义名称上
+    for (const def of schema.definitions) {
+      if (isInsideRange(params.position, def.nameSpan)) {
+        targetName = def.name;
+        targetLoc = {
+          uri: params.textDocument.uri,
+          range: def.nameSpan,
+        };
+        break;
+      }
+
+      // 检查是否点击在字段类型上
+      if (def.kind !== 'ENUM' && isInsideRange(params.position, def.fieldsSpan)) {
+        for (const field of def.fields) {
+          if (field.typeSpan && isInsideRange(params.position, field.typeSpan)) {
+            targetName = field.type;
+            targetLoc = {
+              uri: params.textDocument.uri,
+              range: field.typeSpan,
+            };
+            break;
+          }
+        }
+        if (targetName)
           break;
+      }
+    }
+
+    if (!targetName) {
+      connection.console.log('No definition found at cursor position');
+      return [];
+    }
+
+    connection.console.log(`Found definition ${targetName}, searching for references`);
+
+    const references: Location[] = [];
+
+    // 在所有文件中搜索引用
+    for (const [path, schema] of allSchemas) {
+      const fileContent = fileContents.get(path);
+      if (!fileContent)
+        continue;
+
+      // 在定义中搜索引用
+      for (const def of schema.definitions) {
+        // 检查定义名称
+        if (def.name === targetName) {
+          references.push({
+            uri: pathToFileURL(path),
+            range: def.nameSpan,
+          });
+        }
+
+        // 检查字段类型
+        if (def.kind !== 'ENUM') {
+          for (const field of def.fields) {
+            if (field.type === targetName && field.typeSpan) {
+              // 调整位置到原始文件
+              const adjustedRange = {
+                start: {
+                  line: convertPosition(field.typeSpan.start.line, path, fileContent.filePositions),
+                  character: field.typeSpan.start.character,
+                },
+                end: {
+                  line: convertPosition(field.typeSpan.end.line, path, fileContent.filePositions),
+                  character: field.typeSpan.end.character,
+                },
+              };
+
+              references.push({
+                uri: pathToFileURL(path),
+                range: adjustedRange,
+              });
+            }
+          }
         }
       }
-
-      break;
-    }
-  }
-
-  if (!target) {
-    return [];
-  }
-
-  for (const def of schema.definitions) {
-    if (def.kind === 'ENUM') {
-      continue;
     }
 
-    for (const field of def.fields) {
-      if (field.type !== target) {
-        continue;
-      }
-
-      locs.push({
-        uri: params.textDocument.uri,
-        range: field.typeSpan!,
-      });
+    // 如果需要包含声明，并且找到了目标位置
+    if (params.context.includeDeclaration && targetLoc) {
+      references.push(targetLoc);
     }
-  }
 
-  if (params.context.includeDeclaration && targetLoc) {
-    locs.push(targetLoc);
-  }
+    connection.console.log(`Found ${references.length} references`);
+    return references;
+  },
+);
 
-  return locs;
-});
+/**
+ * 将文件路径转换为 URI
+ */
+function pathToFileURL(filePath: string): string {
+  return `file://${filePath}`;
+}
 
 function findContainingDefinition(
   position: Position,
@@ -473,69 +546,99 @@ connection.onDefinition((params: DefinitionParams): Definition | null => {
   }
 
   const filePath = uriToFilePath(document.uri);
-  const text = document.getText();
-  const includes = parseIncludes(text);
+  connection.console.log(`Finding definition in ${filePath} at position ${params.position.line}:${params.position.character}`);
 
   // 首先检查是否点击的是 include 路径
+  const text = document.getText();
+  const includes = parseIncludes(text);
   for (const include of includes) {
     if (isPositionInRange(params.position, include.pathRange)) {
       const currentDir = path.dirname(filePath);
       const targetPath = path.resolve(currentDir, include.path);
-
-      connection.console.log(`Resolving include from ${document.uri} to ${targetPath}`);
-
       return {
         uri: pathToFileURL(targetPath),
-        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
       };
     }
   }
 
-  // 处理类型定义的跳转
-  const { content: combinedText, filePositions } = readKiwiFile(filePath);
-  const schema = getSchema(params.textDocument.uri);
+  // 获取当前文件及其所有依赖的 Schema
+  const allSchemas = new Map<string, Schema>();
+  const fileContents = new Map<string, { content: string; filePositions: FilePosition[] }>();
 
+  // 加载当前文件
+  const currentFileContent = readKiwiFile(filePath);
+  fileContents.set(filePath, currentFileContent);
+  const schema = getSchema(params.textDocument.uri);
   if (!schema) {
     return null;
   }
+  allSchemas.set(filePath, schema);
 
-  // 找到点击位置所在的定义
-  const clickedDef = findContainingDefinition(params.position, schema);
-  if (!clickedDef) {
+  // 加载所有依赖文件
+  const includedSchemas = loadIncludedSchemas(filePath);
+  for (const [path, schema] of includedSchemas) {
+    allSchemas.set(path, schema);
+    const content = readKiwiFile(path);
+    fileContents.set(path, content);
+  }
+
+  connection.console.log(`Loaded ${allSchemas.size} schemas for definition lookup`);
+
+  // 在当前文件中查找点击的类型
+  let targetType: string | undefined;
+
+  // 检查是否点击在字段类型上
+  for (const def of schema.definitions) {
+    if (def.kind !== 'ENUM' && isInsideRange(params.position, def.fieldsSpan)) {
+      for (const field of def.fields) {
+        if (field.typeSpan && isInsideRange(params.position, field.typeSpan)) {
+          targetType = field.type;
+          break;
+        }
+      }
+      if (targetType)
+        break;
+    }
+  }
+
+  if (!targetType) {
+    connection.console.log('No type found at cursor position');
     return null;
   }
 
-  // 如果点击的是字段类型
-  for (const field of clickedDef.fields) {
-    if (isInsideRange(params.position, field.typeSpan)) {
-      // 收集所有相关文件的 Schema
-      const allSchemas = new Map<string, Schema>();
+  connection.console.log(`Looking for definition of type ${targetType}`);
 
-      // 加载当前文件及其所有依赖
-      allSchemas.set(filePath, schema);
-      const includedSchemas = loadIncludedSchemas(filePath);
-      for (const [path, schema] of includedSchemas) {
-        allSchemas.set(path, schema);
-      }
+  // 在所有文件中查找类型定义
+  for (const [path, schema] of allSchemas) {
+    const fileContent = fileContents.get(path);
+    if (!fileContent)
+      continue;
 
-      // 在所有相关文件中查找类型定义
-      for (const [schemaPath, fileSchema] of allSchemas) {
-        const targetDef = fileSchema.definitions.find(def => def.name === field.type);
-        if (!targetDef) continue;
+    for (const def of schema.definitions) {
+      if (def.name === targetType) {
+        // 调整位置到原始文件
+        const adjustedRange = {
+          start: {
+            line: convertPosition(def.nameSpan.start.line, path, fileContent.filePositions),
+            character: def.nameSpan.start.character,
+          },
+          end: {
+            line: convertPosition(def.nameSpan.end.line, path, fileContent.filePositions),
+            character: def.nameSpan.end.character,
+          },
+        };
 
-        connection.console.log(
-          `Found definition of ${field.type} in ${schemaPath} at line ${targetDef.nameSpan.start.line}`
-        );
-
-        // 不需要转换位置，因为我们使用原始文件中的位置
+        connection.console.log(`Found definition in ${path}`);
         return {
-          uri: pathToFileURL(schemaPath),
-          range: targetDef.nameSpan
+          uri: pathToFileURL(path),
+          range: adjustedRange,
         };
       }
     }
   }
 
+  connection.console.log('Definition not found');
   return null;
 });
 
@@ -547,7 +650,8 @@ function loadIncludedSchemas(filePath: string): Map<string, Schema> {
   const visited = new Set<string>();
 
   function load(currentPath: string) {
-    if (visited.has(currentPath)) return;
+    if (visited.has(currentPath))
+      return;
     visited.add(currentPath);
 
     try {
@@ -561,7 +665,8 @@ function loadIncludedSchemas(filePath: string): Map<string, Schema> {
         const includePath = path.resolve(path.dirname(currentPath), include.path);
         load(includePath);
       }
-    } catch (error) {
+    }
+    catch (error) {
       connection.console.error(`Error loading schema from ${currentPath}: ${error}`);
     }
   }
@@ -570,31 +675,12 @@ function loadIncludedSchemas(filePath: string): Map<string, Schema> {
   return schemas;
 }
 
-/**
- * 从文件路径获取 Schema
- */
-function getSchemaFromPath(filePath: string): Schema | undefined {
-  try {
-    const content = fs.readFileSync(filePath, 'utf8');
-    const [parsed, _] = parseSchema(content);
-    return parsed;
-  } catch (error) {
-    connection.console.error(`Error parsing schema from ${filePath}: ${error}`);
-    return undefined;
-  }
-}
-
 // Helper functions
 function isPositionInRange(position: Position, range: Range): boolean {
-  if (position.line !== range.start.line) return false;
-  return position.character >= range.start.character &&
-         position.character <= range.end.character;
-}
-
-function pathToFileURL(filePath: string): string {
-  // 确保路径使用正斜杠
-  const normalizedPath = filePath.replace(/\\/g, '/');
-  return `file://${normalizedPath}`;
+  if (position.line !== range.start.line)
+    return false;
+  return position.character >= range.start.character
+    && position.character <= range.end.character;
 }
 
 connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => {
@@ -759,8 +845,8 @@ connection.onCompletion(
           detail: `(${d.kind.toLowerCase()} from ${
             schema === allSchemas.get(filePath) ? 'current file' : 'imported file'
           })`,
-        }))
-      )
+        })),
+      ),
     ];
 
     const toplevelCompletions = ['message ', 'struct ', 'enum '].map(kw => ({
@@ -801,7 +887,7 @@ connection.onCompletion(
     // 检查是否在字段定义中
     const fieldMatch = /^\s*(\w+\s+)?(\w*)$/.exec(linePrefix);
     if (fieldMatch) {
-      const [, typePart, fieldPart] = fieldMatch;
+      const [, typePart, _fieldPart] = fieldMatch;
 
       // 如果已经输入了类型，提供字段名建议
       if (typePart) {
@@ -818,7 +904,7 @@ connection.onCompletion(
 
     // 默认提供顶层补全
     return toplevelCompletions;
-  }
+  },
 );
 
 documents.listen(connection);
