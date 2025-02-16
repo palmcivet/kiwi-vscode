@@ -5,6 +5,19 @@ import type { ServerConnection } from './type';
 import { isInsideRange } from '../helper';
 import { convertPosition, fileUriToPath, pathToFileUri, readKiwiFile } from '../parser';
 
+/**
+ * Sets up the reference provider for the language server.
+ * Handles requests to find all references of a symbol at a given position.
+ * Supports finding references in both the current file and its dependencies.
+ *
+ * Key features:
+ * 1. Finding references to type definitions
+ * 2. Finding references to field types
+ * 3. Supporting cross-file reference lookup
+ *
+ * @param connection - The server connection instance for communication
+ * @param schemaStore - Store managing schema documents and their dependencies
+ */
 export function setupOnReference(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onReferences(
     (params: ReferenceParams): Location[] => {
@@ -14,13 +27,13 @@ export function setupOnReference(connection: ServerConnection, schemaStore: Sche
       }
 
       const filePath = fileUriToPath(document.uri);
-      connection.console.log(`Finding references in ${filePath} at position ${params.position.line}:${params.position.character}`);
+      connection.console.info(`Finding references in ${filePath} at position ${params.position.line}:${params.position.character}`);
 
-      // 获取当前文件及其所有依赖的 Schema
+      // Load schemas for the current file and all its dependencies
       const allSchemas = new Map<string, Schema>();
       const fileContents = new Map<string, { content: string; filePositions: FilePosition[] }>();
 
-      // 首先加载当前文件
+      // Load the current file's schema
       const currentFileContent = readKiwiFile(filePath);
       fileContents.set(filePath, currentFileContent);
       const schema = schemaStore.loadTextSchema(params.textDocument.uri);
@@ -29,7 +42,7 @@ export function setupOnReference(connection: ServerConnection, schemaStore: Sche
       }
       allSchemas.set(filePath, schema);
 
-      // 加载所有依赖文件
+      // Load all dependency files' schemas
       const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
       for (const [path, schema] of includedSchemas) {
         allSchemas.set(path, schema);
@@ -37,13 +50,13 @@ export function setupOnReference(connection: ServerConnection, schemaStore: Sche
         fileContents.set(path, content);
       }
 
-      connection.console.log(`Loaded ${allSchemas.size} schemas for reference search`);
+      connection.console.info(`Loaded ${allSchemas.size} schemas for reference search`);
 
-      // 找到点击位置的定义
+      // Find the definition at the clicked position
       let targetName: string | undefined;
       let targetLoc: Location | undefined;
 
-      // 检查是否点击在定义名称上
+      // Check if clicked on a definition name
       for (const def of schema.definitions) {
         if (isInsideRange(params.position, def.nameSpan)) {
           targetName = def.name;
@@ -54,7 +67,7 @@ export function setupOnReference(connection: ServerConnection, schemaStore: Sche
           break;
         }
 
-        // 检查是否点击在字段类型上
+        // Check if clicked on a field type
         if (def.kind !== 'ENUM' && isInsideRange(params.position, def.fieldsSpan)) {
           for (const field of def.fields) {
             if (field.typeSpan && isInsideRange(params.position, field.typeSpan)) {
@@ -72,23 +85,23 @@ export function setupOnReference(connection: ServerConnection, schemaStore: Sche
       }
 
       if (!targetName) {
-        connection.console.log('No definition found at cursor position');
+        connection.console.error('No definition found at cursor position');
         return [];
       }
 
-      connection.console.log(`Found definition ${targetName}, searching for references`);
+      connection.console.info(`Found definition ${targetName}, searching for references`);
 
       const references: Location[] = [];
 
-      // 在所有文件中搜索引用
+      // Search for references across all files
       for (const [path, schema] of allSchemas) {
         const fileContent = fileContents.get(path);
         if (!fileContent)
           continue;
 
-        // 在定义中搜索引用
+        // Search for references in definitions
         for (const def of schema.definitions) {
-          // 检查定义名称
+          // Check definition names
           if (def.name === targetName) {
             references.push({
               uri: pathToFileUri(path),
@@ -96,11 +109,11 @@ export function setupOnReference(connection: ServerConnection, schemaStore: Sche
             });
           }
 
-          // 检查字段类型
+          // Check field types
           if (def.kind !== 'ENUM') {
             for (const field of def.fields) {
               if (field.type === targetName && field.typeSpan) {
-                // 调整位置到原始文件
+                // Adjust position to original file coordinates
                 const adjustedRange = {
                   start: {
                     line: convertPosition(field.typeSpan.start.line, path, fileContent.filePositions),
@@ -122,12 +135,12 @@ export function setupOnReference(connection: ServerConnection, schemaStore: Sche
         }
       }
 
-      // 如果需要包含声明，并且找到了目标位置
+      // Include the declaration if requested and found
       if (params.context.includeDeclaration && targetLoc) {
         references.push(targetLoc);
       }
 
-      connection.console.log(`Found ${references.length} references`);
+      connection.console.info(`Found ${references.length} references`);
       return references;
     },
   );

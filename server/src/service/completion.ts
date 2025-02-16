@@ -5,6 +5,13 @@ import type { ServerConnection } from './type';
 import { CompletionItemKind } from 'vscode-languageserver/node';
 import { fileUriToPath, NativeTypes } from '../parser';
 
+/**
+ * Sets up completion provider for the language server.
+ * Handles code completion requests and provides relevant suggestions based on context.
+ *
+ * @param connection - The server connection instance for communication
+ * @param schemaStore - Store managing schema documents and their dependencies
+ */
 export function setupOnCompletion(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onCompletion(
     (textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
@@ -14,32 +21,34 @@ export function setupOnCompletion(connection: ServerConnection, schemaStore: Sch
       }
 
       const filePath = fileUriToPath(document.uri);
-      connection.console.log(`Computing completions for ${filePath} at line ${textDocumentPosition.position.line}`);
+      connection.console.debug(`Computing completions for ${filePath} at line ${textDocumentPosition.position.line}`);
 
-      // 获取当前文件及其所有依赖的 Schema
+      // Load current file's schema and its dependencies
       const allSchemas = new Map<string, Schema>();
 
-      // 首先加载当前文件
+      // Load schema for current file
       const schema = schemaStore.loadTextSchema(textDocumentPosition.textDocument.uri);
       if (!schema) {
-        connection.console.log(`No schema found for ${filePath}`);
+        connection.console.error(`No schema found for ${filePath}`);
         return [];
       }
       allSchemas.set(filePath, schema);
 
-      // 加载所有依赖文件
+      // Load schemas from all included files
       const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
       for (const [path, schema] of includedSchemas) {
         allSchemas.set(path, schema);
       }
 
-      // 收集所有可用的类型
+      // Collect all available types for completion
       const typeCompletions: CompletionItem[] = [
+        // Add built-in types
         ...NativeTypes.map(ty => ({
           label: ty,
           kind: CompletionItemKind.Field,
           detail: '(builtin type)',
         })),
+        // Add user-defined types from all schemas
         ...Array.from(allSchemas.values()).flatMap(schema =>
           schema.definitions.map(d => ({
             label: d.name,
@@ -53,25 +62,24 @@ export function setupOnCompletion(connection: ServerConnection, schemaStore: Sch
         ),
       ];
 
+      // Define top-level declarations available for completion
       const toplevelCompletions = ['message ', 'struct ', 'enum '].map(kw => ({
         label: kw,
         kind: CompletionItemKind.Keyword,
         detail: '(declaration)',
       }));
 
-      // 获取当前行的文本和光标位置
+      // Get current line text and cursor position
       const lines = document.getText().split('\n');
       const currentLine = lines[textDocumentPosition.position.line];
       const currentCharacter = textDocumentPosition.position.character;
 
-      connection.console.log(`Current line: "${currentLine}"`);
-      connection.console.log(`Current character: ${currentCharacter}`);
-
-      // 分析当前行的上下文
+      // Analyze current line context up to cursor position
       const linePrefix = currentLine.slice(0, currentCharacter).trim();
 
-      // 如果当前行是空的或只有空白字符，提供顶层补全
+      // Handle empty lines - provide top-level completions
       if (!linePrefix) {
+        // Add package declaration if not defined and cursor is at file start
         if (!schema.package && textDocumentPosition.position.line === 0) {
           toplevelCompletions.push({
             label: 'package ',
@@ -82,18 +90,18 @@ export function setupOnCompletion(connection: ServerConnection, schemaStore: Sch
         return toplevelCompletions;
       }
 
-      // 检查是否在消息定义内部
+      // Check if cursor is inside a message definition
       const messageMatch = /^\s*message\s+\w+\s*\{/.test(currentLine);
       if (messageMatch) {
         return typeCompletions;
       }
 
-      // 检查是否在字段定义中
+      // Check if cursor is in a field definition
       const fieldMatch = /^\s*(\w+\s+)?(\w*)$/.exec(linePrefix);
       if (fieldMatch) {
         const [, typePart, _fieldPart] = fieldMatch;
 
-        // 如果已经输入了类型，提供字段名建议
+        // If type is already entered, suggest field modifiers
         if (typePart) {
           return [{
             label: 'deprecated',
@@ -102,11 +110,11 @@ export function setupOnCompletion(connection: ServerConnection, schemaStore: Sch
           }];
         }
 
-        // 否则提供类型建议
+        // Otherwise suggest available types
         return typeCompletions;
       }
 
-      // 默认提供顶层补全
+      // Default to top-level completions
       return toplevelCompletions;
     },
   );

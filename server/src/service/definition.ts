@@ -1,18 +1,27 @@
-import type { Definition, DefinitionParams, Position, Range } from 'vscode-languageserver/node';
+import type { Definition, DefinitionParams } from 'vscode-languageserver/node';
 import type { FilePosition, Schema } from '../parser';
 import type { SchemaStore } from './store';
 import type { ServerConnection } from './type';
 import { dirname, resolve } from 'node:path';
-import { convertPosition, fileUriToPath, parseIncludes, pathToFileUri, readKiwiFile } from '../parser';
+import { isPositionInRange } from '../helper';
+import {
+  convertPosition,
+  fileUriToPath,
+  parseIncludes,
+  pathToFileUri,
+  readKiwiFile,
+} from '../parser';
 
-// Helper functions
-function isPositionInRange(position: Position, range: Range): boolean {
-  if (position.line !== range.start.line)
-    return false;
-  return position.character >= range.start.character
-    && position.character <= range.end.character;
-}
-
+/**
+ * Sets up the definition provider for the language server.
+ * Handles requests to find the definition of a symbol at a given position.
+ * Supports two main features:
+ * 1. Finding the target file for \@include directives
+ * 2. Finding type definitions in the current file and its dependencies
+ *
+ * @param connection - The server connection instance for communication
+ * @param schemaStore - Store managing schema documents and their dependencies
+ */
 export function setupOnDefinition(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onDefinition((params: DefinitionParams): Definition | null => {
     const document = schemaStore.getTextDocument(params.textDocument.uri);
@@ -21,9 +30,9 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
     }
 
     const filePath = fileUriToPath(document.uri);
-    connection.console.log(`Finding definition in ${filePath} at position ${params.position.line}:${params.position.character}`);
+    connection.console.debug(`Finding definition in ${filePath} at position ${params.position.line}:${params.position.character}`);
 
-    // 首先检查是否点击的是 include 路径
+    // First, check if the cursor is on an include path
     const text = document.getText();
     const includes = parseIncludes(text);
     for (const include of includes) {
@@ -37,11 +46,11 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
       }
     }
 
-    // 获取当前文件及其所有依赖的 Schema
+    // Get schemas for the current file and all its dependencies
     const allSchemas = new Map<string, Schema>();
     const fileContents = new Map<string, { content: string; filePositions: FilePosition[] }>();
 
-    // 加载当前文件
+    // Load the current file's schema
     const currentFileContent = readKiwiFile(filePath);
     fileContents.set(filePath, currentFileContent);
     const schema = schemaStore.loadTextSchema(params.textDocument.uri);
@@ -50,7 +59,7 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
     }
     allSchemas.set(filePath, schema);
 
-    // 加载所有依赖文件
+    // Load all dependency files' schemas
     const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
     for (const [path, schema] of includedSchemas) {
       allSchemas.set(path, schema);
@@ -58,12 +67,12 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
       fileContents.set(path, content);
     }
 
-    connection.console.log(`Loaded ${allSchemas.size} schemas for definition lookup`);
+    connection.console.info(`Loaded ${allSchemas.size} schemas for definition lookup`);
 
-    // 在当前文件中查找点击的类型
+    // Find the type that was clicked in the current file
     let targetType: string | undefined;
 
-    // 检查是否点击在字段类型上
+    // Check if the cursor is on a field type
     for (const def of schema.definitions) {
       if (def.kind !== 'ENUM') {
         for (const field of def.fields) {
@@ -78,13 +87,13 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
     }
 
     if (!targetType) {
-      connection.console.log('No type found at cursor position');
+      connection.console.error('No type found at cursor position');
       return null;
     }
 
-    connection.console.log(`Looking for definition of type ${targetType}`);
+    connection.console.info(`Looking for definition of type ${targetType}`);
 
-    // 在所有文件中查找类型定义
+    // Search for the type definition across all files
     for (const [path, schema] of allSchemas) {
       const fileContent = fileContents.get(path);
       if (!fileContent)
@@ -92,7 +101,7 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
 
       for (const def of schema.definitions) {
         if (def.name === targetType) {
-          // 调整位置到原始文件
+          // Adjust the position to the original file's coordinates
           const adjustedRange = {
             start: {
               line: convertPosition(def.nameSpan.start.line, path, fileContent.filePositions),
@@ -104,7 +113,7 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
             },
           };
 
-          connection.console.log(`Found definition in ${path} at line ${adjustedRange.start.line}`);
+          connection.console.info(`Found definition in ${path} at line ${adjustedRange.start.line}`);
           return {
             uri: pathToFileUri(path),
             range: adjustedRange,
@@ -113,7 +122,7 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
       }
     }
 
-    connection.console.log('Definition not found');
+    connection.console.error('Definition not found');
     return null;
   });
 }

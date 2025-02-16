@@ -146,9 +146,8 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
 
     return { content: finalContent, filePositions };
   }
-  catch (error) {
-    // TODO handle error
-    console.error(`Error reading kiwi file ${filePath}: ${error}`);
+  // eslint-disable-next-line unused-imports/no-unused-vars
+  catch (error: any) {
     return { content: '', filePositions: [] };
   }
 }

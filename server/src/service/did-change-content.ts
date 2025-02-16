@@ -23,6 +23,13 @@ import {
 } from '../parser';
 import { serverStore } from './store';
 
+/**
+ * Validates a text document and generates diagnostics.
+ * This includes syntax errors, style warnings, and other language-specific issues.
+ *
+ * @param textDocument - The document to validate
+ * @returns Array of diagnostic messages for the document
+ */
 function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
   const filePath = fileUriToPath(textDocument.uri);
   const { content: combinedText, filePositions } = readKiwiFile(filePath);
@@ -40,14 +47,14 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
     errors.push(error);
   }
 
-  // 过滤并调整诊断信息
+  // Filter and adjust diagnostic information
   const diagnostics: Diagnostic[] = errors
     .filter((e) => {
-      // 只保留当前文件的错误
+      // Only keep errors from the current file
       return isPositionInFile(e.range.start.line, filePath, filePositions);
     })
     .map((e) => {
-      // 调整错误范围到原始文件中的位置
+      // Adjust error ranges to positions in the original file
       const adjustedRange = {
         start: {
           line: convertPosition(e.range.start.line, filePath, filePositions),
@@ -74,15 +81,15 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
       };
     });
 
-  // 添加样式诊断
+  // Add style diagnostics
   if (schema) {
     for (const def of schema.definitions) {
-      // 跳过非当前文件的定义
+      // Skip definitions not in the current file
       if (!isPositionInFile(def.nameSpan.start.line, filePath, filePositions)) {
         continue;
       }
 
-      // 调整定义的位置
+      // Adjust definition position
       const adjustedNameSpan = {
         start: {
           line: convertPosition(def.nameSpan.start.line, filePath, filePositions),
@@ -94,6 +101,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
         },
       };
 
+      // Check for PascalCase in definition names
       if (!isPascalCase(def.name)) {
         diagnostics.push({
           message: `${sentenceCase(def.kind)} names should be PascalCase`,
@@ -104,6 +112,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
         });
       }
 
+      // Handle enum fields
       if (def.kind === 'ENUM') {
         for (const field of def.fields) {
           if (isScreamingSnakeCase(field.name)) {
@@ -119,9 +128,10 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
           });
         }
       }
+      // Handle struct/message fields
       else {
         for (const field of def.fields) {
-          // 调整字段位置
+          // Adjust field position
           const adjustedFieldSpan = {
             start: {
               line: convertPosition(field.nameSpan.start.line, filePath, filePositions),
@@ -133,6 +143,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
             },
           };
 
+          // Check for deprecated fields
           if (field.isDeprecated) {
             diagnostics.push({
               message: 'Field deprecated',
@@ -143,6 +154,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
             });
           }
 
+          // Check for camelCase in field names
           if (!isCamelCase(field.name)) {
             diagnostics.push({
               message: 'Field names should be camelCase',
@@ -156,6 +168,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
       }
     }
 
+    // Check package name case
     if (schema.package && !isPascalCase(schema.package.text)) {
       diagnostics.push({
         message: 'Package names should be PascalCase',
@@ -167,7 +180,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
     }
   }
 
-  // 处理重复定义的相关信息
+  // Handle duplicate definition information
   for (const e of errors) {
     if (!e.relatedInformation || !serverStore.hasDiagnosticRelatedInformation()) {
       continue;
@@ -200,6 +213,15 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
   return diagnostics;
 }
 
+/**
+ * Sets up the content change handler for the language server.
+ * This includes:
+ * 1. Diagnostic report generation when requested
+ * 2. Real-time validation as content changes
+ *
+ * @param connection - The server connection instance
+ * @param documents - The text document manager
+ */
 export function setupOnDidChangeContent(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
   connection.languages.diagnostics.on((params) => {
     const document = documents.get(params.textDocument.uri);
