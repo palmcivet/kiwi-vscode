@@ -3,6 +3,7 @@ dist/**
 fixture/**
 **/*.ts
 **/*.map
+**/*.vsix
 **/*.tsbuildinfo
 .gitignore
 .cursorrules

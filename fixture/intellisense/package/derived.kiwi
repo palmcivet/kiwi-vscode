@@ -1,6 +1,8 @@
 /// @include ../enum.kiwi
 /// @include "./base-1.kiwi"
 /// @include './base-2.kiwi'
+/// @include './base-2.kiwi'
+/// @include "./base-1.kiwi"
 
 message ChangeSet {
   Axis axis = 1;

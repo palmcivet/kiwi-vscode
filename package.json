@@ -47,7 +47,7 @@
   "scripts": {
     "postinstall": "cd ./client && npm install && cd ../server && npm install && cd ..",
     "vscode:prepublish": "npm run build",
-    "package": "npx vsce package -o ./dist",
+    "package": "npx vsce package",
     "prebuild": "npm run clean",
     "build": "tsc -b",
     "watch": "tsc -b -w",

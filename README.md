@@ -1,10 +1,12 @@
 # Kiwi VSCode
 
-Better support for the Kiwi message format in Visual Studio Code.
+English | [中文](./README.zh-CN.md)
+
+> Better support for the Kiwi message format in Visual Studio Code.
 
 Forked from [connorskees/kiwi-lsp](https://github.com/connorskees/kiwi-lsp), which published on [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=connorskees.kiwi-lsp), identified by `connorskees.kiwi-lsp`.
 
-## Features
+## Basic Features
 
 The following features are provided by the original plugin:
 
@@ -16,7 +18,7 @@ The following features are provided by the original plugin:
 ## Credits
 
 - [Cursor](https://www.cursor.com/)
-- [Visual Studio Code](https://code.visualstudio.com/)
+- [Tare](https://www.tare.ai/)
 
 ## License
 
