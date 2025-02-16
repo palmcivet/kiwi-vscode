@@ -54,7 +54,7 @@
     "clean": "rimraf ./{client,server}/out ./dist",
     "test": "npm run test:server && npm run test:client",
     "test:server": "npm run build && mocha ./server/out/test",
-    "test:client": "npm run build && node ./client/out/test/run-test",
+    "test:client": "npm run build && node ./client/out/test",
     "lint": "eslint ."
   },
   "devDependencies": {

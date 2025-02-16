@@ -10,18 +10,21 @@ import {
   setupOnInitialize,
   setupOnReference,
 } from './service';
+import { SchemaStore } from './service/store';
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
+const schemaStore = new SchemaStore(connection.console, documents);
 
-setupOnInitialize(connection, documents);
+setupOnInitialize(connection);
 setupOnDidChangeContent(connection, documents);
-setupOnCompletion(connection, documents);
-setupOnHover(connection, documents);
-setupOnReference(connection, documents);
-setupOnDefinition(connection, documents);
-setupOnDocumentSymbol(connection, documents);
-setupOnCodeAction(connection, documents);
+
+setupOnCompletion(connection, schemaStore);
+setupOnHover(connection, schemaStore);
+setupOnReference(connection, schemaStore);
+setupOnDefinition(connection, schemaStore);
+setupOnDocumentSymbol(connection, schemaStore);
+setupOnCodeAction(connection, schemaStore);
 
 documents.listen(connection);
 connection.listen();

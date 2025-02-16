@@ -1,9 +1,9 @@
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { CodeAction, CodeActionParams, TextDocuments } from 'vscode-languageserver/node';
+import type { CodeAction, CodeActionParams } from 'vscode-languageserver/node';
 import type { Definition } from '../parser';
-import type { ServerConnection } from './util';
+import type { SchemaStore } from './store';
+import type { ServerConnection } from './type';
 import { CodeActionKind, TextEdit } from 'vscode-languageserver/node';
-import { findContainingDefinition, getSchema } from './util';
+import { isInsideRange } from '../helper';
 
 function getNextId(def: Definition): number | undefined {
   if (def.kind !== 'MESSAGE') {
@@ -21,7 +21,7 @@ function getNextId(def: Definition): number | undefined {
   return def.fields.length;
 }
 
-export function setupOnCodeAction(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
+export function setupOnCodeAction(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
     const diagnostics = params.context.diagnostics.filter(d => !!d.data);
 
@@ -29,12 +29,12 @@ export function setupOnCodeAction(connection: ServerConnection, documents: TextD
       return [];
     }
 
-    const schema = getSchema(params.textDocument.uri, documents);
+    const schema = schemaStore.loadTextSchema(params.textDocument.uri);
     if (!schema) {
       return [];
     }
 
-    const def = findContainingDefinition(params.range.start, schema);
+    const def = schema.definitions.find(def => isInsideRange(params.range.start, def.defSpan));
 
     function getNextIdQuickActions() {
       const nextIdDiagnostics = diagnostics.filter(d => d.data === 'invalid id');

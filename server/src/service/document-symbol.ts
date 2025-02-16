@@ -1,12 +1,11 @@
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { DocumentSymbol, DocumentSymbolParams, TextDocuments } from 'vscode-languageserver/node';
-import type { ServerConnection } from './util';
+import type { DocumentSymbol, DocumentSymbolParams } from 'vscode-languageserver/node';
+import type { SchemaStore } from './store';
+import type { ServerConnection } from './type';
 import { SymbolKind } from 'vscode-languageserver/node';
-import { getSchema } from './util';
 
-export function setupOnDocumentSymbol(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
+export function setupOnDocumentSymbol(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => {
-    const schema = getSchema(params.textDocument.uri, documents);
+    const schema = schemaStore.loadTextSchema(params.textDocument.uri);
 
     if (!schema) {
       return [];

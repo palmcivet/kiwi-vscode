@@ -1,10 +1,9 @@
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { Definition, DefinitionParams, Position, Range, TextDocuments } from 'vscode-languageserver/node';
+import type { Definition, DefinitionParams, Position, Range } from 'vscode-languageserver/node';
 import type { FilePosition, Schema } from '../parser';
-import type { ServerConnection } from './util';
+import type { SchemaStore } from './store';
+import type { ServerConnection } from './type';
 import { dirname, resolve } from 'node:path';
 import { convertPosition, fileUriToPath, parseIncludes, pathToFileUri, readKiwiFile } from '../parser';
-import { getSchema, loadIncludedSchemas } from './util';
 
 // Helper functions
 function isPositionInRange(position: Position, range: Range): boolean {
@@ -14,9 +13,9 @@ function isPositionInRange(position: Position, range: Range): boolean {
     && position.character <= range.end.character;
 }
 
-export function setupOnDefinition(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
+export function setupOnDefinition(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onDefinition((params: DefinitionParams): Definition | null => {
-    const document = documents.get(params.textDocument.uri);
+    const document = schemaStore.getTextDocument(params.textDocument.uri);
     if (!document) {
       return null;
     }
@@ -45,14 +44,14 @@ export function setupOnDefinition(connection: ServerConnection, documents: TextD
     // 加载当前文件
     const currentFileContent = readKiwiFile(filePath);
     fileContents.set(filePath, currentFileContent);
-    const schema = getSchema(params.textDocument.uri, documents);
+    const schema = schemaStore.loadTextSchema(params.textDocument.uri);
     if (!schema) {
       return null;
     }
     allSchemas.set(filePath, schema);
 
     // 加载所有依赖文件
-    const includedSchemas = loadIncludedSchemas(filePath);
+    const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
     for (const [path, schema] of includedSchemas) {
       allSchemas.set(path, schema);
       const content = readKiwiFile(path);

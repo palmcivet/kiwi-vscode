@@ -1,7 +1,7 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { Diagnostic, DocumentDiagnosticReport, TextDocuments } from 'vscode-languageserver/node';
 import type { KiwiParseError, Schema } from '../parser';
-import type { ServerConnection } from './util';
+import type { ServerConnection } from './type';
 import { camelCase, constantCase, pascalCase, sentenceCase } from 'change-case';
 import {
   DiagnosticRelatedInformation,
@@ -21,9 +21,9 @@ import {
   parseSchema,
   readKiwiFile,
 } from '../parser';
-import { store } from './store';
+import { serverStore } from './store';
 
-async function validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
+function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
   const filePath = fileUriToPath(textDocument.uri);
   const { content: combinedText, filePositions } = readKiwiFile(filePath);
 
@@ -31,13 +31,13 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
   let errors: KiwiParseError[] = [];
 
   try {
+    // TODO cache schema
     const [parsed, validateErrors] = parseSchema(combinedText);
-    store.setFile(textDocument.uri, parsed);
     schema = parsed;
     errors = validateErrors;
   }
-  catch (e: any) {
-    errors.push(e);
+  catch (error: any) {
+    errors.push(error);
   }
 
   // 过滤并调整诊断信息
@@ -62,7 +62,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
       return {
         message: e.message,
         range: adjustedRange,
-        relatedInformation: e.relatedInformation && store.hasDiagnosticRelatedInformation()
+        relatedInformation: e.relatedInformation && serverStore.hasDiagnosticRelatedInformation()
           ? [DiagnosticRelatedInformation.create(
               { uri: textDocument.uri, range: adjustedRange },
               e.relatedInformation.message,
@@ -169,7 +169,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
 
   // 处理重复定义的相关信息
   for (const e of errors) {
-    if (!e.relatedInformation || !store.hasDiagnosticRelatedInformation()) {
+    if (!e.relatedInformation || !serverStore.hasDiagnosticRelatedInformation()) {
       continue;
     }
 
@@ -201,13 +201,16 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
 }
 
 export function setupOnDidChangeContent(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
-  connection.languages.diagnostics.on(async (params) => {
+  connection.languages.diagnostics.on((params) => {
     const document = documents.get(params.textDocument.uri);
     return {
       kind: DocumentDiagnosticReportKind.Full,
-      items: document ? await validateTextDocument(document) : [],
+      items: document ? validateTextDocument(document) : [],
     } satisfies DocumentDiagnosticReport;
   });
 
-  documents.onDidChangeContent(change => validateTextDocument(change.document));
+  documents.onDidChangeContent(({ document }) => {
+    const diagnostics = validateTextDocument(document);
+    connection.sendDiagnostics({ uri: document.uri, diagnostics });
+  });
 }

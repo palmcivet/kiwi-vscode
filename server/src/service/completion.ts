@@ -1,15 +1,14 @@
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { CompletionItem, TextDocumentPositionParams, TextDocuments } from 'vscode-languageserver/node';
+import type { CompletionItem, TextDocumentPositionParams } from 'vscode-languageserver/node';
 import type { Schema } from '../parser';
-import type { ServerConnection } from './util';
+import type { SchemaStore } from './store';
+import type { ServerConnection } from './type';
 import { CompletionItemKind } from 'vscode-languageserver/node';
 import { fileUriToPath, NativeTypes } from '../parser';
-import { getSchema, loadIncludedSchemas } from './util';
 
-export function setupOnCompletion(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
+export function setupOnCompletion(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onCompletion(
     (textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-      const document = documents.get(textDocumentPosition.textDocument.uri);
+      const document = schemaStore.getTextDocument(textDocumentPosition.textDocument.uri);
       if (!document) {
         return [];
       }
@@ -21,7 +20,7 @@ export function setupOnCompletion(connection: ServerConnection, documents: TextD
       const allSchemas = new Map<string, Schema>();
 
       // 首先加载当前文件
-      const schema = getSchema(textDocumentPosition.textDocument.uri, documents);
+      const schema = schemaStore.loadTextSchema(textDocumentPosition.textDocument.uri);
       if (!schema) {
         connection.console.log(`No schema found for ${filePath}`);
         return [];
@@ -29,7 +28,7 @@ export function setupOnCompletion(connection: ServerConnection, documents: TextD
       allSchemas.set(filePath, schema);
 
       // 加载所有依赖文件
-      const includedSchemas = loadIncludedSchemas(filePath);
+      const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
       for (const [path, schema] of includedSchemas) {
         allSchemas.set(path, schema);
       }

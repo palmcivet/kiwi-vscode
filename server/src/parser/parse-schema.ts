@@ -520,6 +520,20 @@ function verify(root: Schema): KiwiParseError[] {
   return errors;
 }
 
+/**
+ * Parses and validates a Kiwi schema text through three main steps:
+ * 1. Lexical analysis (tokenization)
+ * 2. Syntax parsing
+ * 3. Semantic validation
+ *
+ * Note: During parsing, if a fatal error is encountered (e.g., missing required syntax elements),
+ * the parser will throw a KiwiParseError through the expect() function.
+ *
+ * @param text The source code text of the Kiwi schema to parse
+ * @returns A tuple containing:
+ * - The parsed and validated schema
+ * - An array of any errors encountered during tokenization, parsing, or validation
+ */
 export function parseSchema(text: string): [Schema, KiwiParseError[]] {
   const [tokens, tokenErrors] = tokenize(text);
   const [schema, parseErrors] = parse(tokens);

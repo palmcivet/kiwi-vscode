@@ -1,16 +1,14 @@
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { Location, ReferenceParams, TextDocuments } from 'vscode-languageserver/node';
-import type { FilePosition } from '../parser';
-import type { Schema } from '../parser/schema';
-import type { ServerConnection } from './util';
+import type { Location, ReferenceParams } from 'vscode-languageserver/node';
+import type { FilePosition, Schema } from '../parser';
+import type { SchemaStore } from './store';
+import type { ServerConnection } from './type';
 import { isInsideRange } from '../helper';
 import { convertPosition, fileUriToPath, pathToFileUri, readKiwiFile } from '../parser';
-import { getSchema, loadIncludedSchemas } from './util';
 
-export function setupOnReference(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
+export function setupOnReference(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onReferences(
     (params: ReferenceParams): Location[] => {
-      const document = documents.get(params.textDocument.uri);
+      const document = schemaStore.getTextDocument(params.textDocument.uri);
       if (!document) {
         return [];
       }
@@ -25,14 +23,14 @@ export function setupOnReference(connection: ServerConnection, documents: TextDo
       // 首先加载当前文件
       const currentFileContent = readKiwiFile(filePath);
       fileContents.set(filePath, currentFileContent);
-      const schema = getSchema(params.textDocument.uri, documents);
+      const schema = schemaStore.loadTextSchema(params.textDocument.uri);
       if (!schema) {
         return [];
       }
       allSchemas.set(filePath, schema);
 
       // 加载所有依赖文件
-      const includedSchemas = loadIncludedSchemas(filePath);
+      const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
       for (const [path, schema] of includedSchemas) {
         allSchemas.set(path, schema);
         const content = readKiwiFile(path);

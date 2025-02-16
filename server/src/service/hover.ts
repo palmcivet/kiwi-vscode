@@ -1,14 +1,13 @@
-import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { CancellationToken, Hover, HoverParams, TextDocuments } from 'vscode-languageserver/node';
+import type { CancellationToken, Hover, HoverParams } from 'vscode-languageserver/node';
 import type { Definition, Field } from '../parser';
-import type { ServerConnection } from './util';
+import type { SchemaStore } from './store';
+import type { ServerConnection } from './type';
 import {
   isInsideFieldsDefinition,
   isInsideLineRange,
   isInsideRange,
   isInsideTypeReference,
 } from '../helper';
-import { findContainingDefinition, getSchema } from './util';
 
 const PRIMITIVE_TYPE_DOCS: Record<string, string> = {
   bool: 'A value that stores either true or false',
@@ -29,9 +28,9 @@ const KEYWORD_DOCS: Record<string, string> = {
     'An object whose fields are optional. The default structure in a kiwi document.',
 };
 
-export function setupOnHover(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
+export function setupOnHover(connection: ServerConnection, schemaStore: SchemaStore): void {
   connection.onHover((params: HoverParams, _token: CancellationToken): Hover => {
-    const schema = getSchema(params.textDocument.uri, documents);
+    const schema = schemaStore.loadTextSchema(params.textDocument.uri);
 
     if (!schema) {
       return { contents: [] };
@@ -54,7 +53,7 @@ export function setupOnHover(connection: ServerConnection, documents: TextDocume
       return notes;
     };
 
-    const def = findContainingDefinition(params.position, schema);
+    const def = schema.definitions.find(def => isInsideRange(params.position, def.defSpan));
 
     if (!def) {
       return { contents: [] };
