@@ -1,6 +1,7 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { Diagnostic, DocumentDiagnosticReport, TextDocuments } from 'vscode-languageserver/node';
+import type { Diagnostic, DocumentDiagnosticReport } from 'vscode-languageserver/node';
 import type { KiwiParseError, Schema } from '../parser';
+import type { FileStore } from '../store';
 import type { ServerConnection } from './type';
 import { camelCase, constantCase, pascalCase, sentenceCase } from 'change-case';
 import {
@@ -21,7 +22,7 @@ import {
   parseSchema,
   readKiwiFile,
 } from '../parser';
-import { serverStore } from './store';
+import { configStore } from '../store';
 
 /**
  * Validates a text document and generates diagnostics.
@@ -69,7 +70,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
       return {
         message: e.message,
         range: adjustedRange,
-        relatedInformation: e.relatedInformation && serverStore.hasDiagnosticRelatedInformation()
+        relatedInformation: e.relatedInformation && configStore.hasDiagnosticRelatedInformation()
           ? [DiagnosticRelatedInformation.create(
               { uri: textDocument.uri, range: adjustedRange },
               e.relatedInformation.message,
@@ -182,7 +183,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
 
   // Handle duplicate definition information
   for (const e of errors) {
-    if (!e.relatedInformation || !serverStore.hasDiagnosticRelatedInformation()) {
+    if (!e.relatedInformation || !configStore.hasDiagnosticRelatedInformation()) {
       continue;
     }
 
@@ -219,10 +220,11 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
  * 1. Diagnostic report generation when requested
  * 2. Real-time validation as content changes
  *
- * @param connection - The server connection instance
- * @param documents - The text document manager
+ * @param connection - The server connection instanc
+ * @param fileStore - Store managing schema documents and their dependencies
  */
-export function setupOnDidChangeContent(connection: ServerConnection, documents: TextDocuments<TextDocument>): void {
+export function setupOnDidChangeContent(connection: ServerConnection, fileStore: FileStore): void {
+  const documents = fileStore.getDocuments();
   connection.languages.diagnostics.on((params) => {
     const document = documents.get(params.textDocument.uri);
     return {

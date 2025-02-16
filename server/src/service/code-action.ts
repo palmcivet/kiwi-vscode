@@ -1,6 +1,6 @@
 import type { CodeAction, CodeActionParams } from 'vscode-languageserver/node';
 import type { Definition } from '../parser';
-import type { SchemaStore } from './store';
+import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
 import { CodeActionKind, TextEdit } from 'vscode-languageserver/node';
 import { isInsideRange } from '../helper';
@@ -21,7 +21,7 @@ function getNextId(def: Definition): number | undefined {
   return def.fields.length;
 }
 
-export function setupOnCodeAction(connection: ServerConnection, schemaStore: SchemaStore): void {
+export function setupOnCodeAction(connection: ServerConnection, fileStore: FileStore): void {
   connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
     const diagnostics = params.context.diagnostics.filter(d => !!d.data);
 
@@ -29,7 +29,7 @@ export function setupOnCodeAction(connection: ServerConnection, schemaStore: Sch
       return [];
     }
 
-    const schema = schemaStore.loadTextSchema(params.textDocument.uri);
+    const schema = fileStore.loadTextSchema(params.textDocument.uri);
     if (!schema) {
       return [];
     }

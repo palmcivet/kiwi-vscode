@@ -1,6 +1,6 @@
 import type { Definition, DefinitionParams } from 'vscode-languageserver/node';
 import type { FilePosition, Schema } from '../parser';
-import type { SchemaStore } from './store';
+import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
 import { dirname, resolve } from 'node:path';
 import { isPositionInRange } from '../helper';
@@ -20,11 +20,11 @@ import {
  * 2. Finding type definitions in the current file and its dependencies
  *
  * @param connection - The server connection instance for communication
- * @param schemaStore - Store managing schema documents and their dependencies
+ * @param fileStore - Store managing schema documents and their dependencies
  */
-export function setupOnDefinition(connection: ServerConnection, schemaStore: SchemaStore): void {
+export function setupOnDefinition(connection: ServerConnection, fileStore: FileStore): void {
   connection.onDefinition((params: DefinitionParams): Definition | null => {
-    const document = schemaStore.getTextDocument(params.textDocument.uri);
+    const document = fileStore.getTextDocument(params.textDocument.uri);
     if (!document) {
       return null;
     }
@@ -53,14 +53,14 @@ export function setupOnDefinition(connection: ServerConnection, schemaStore: Sch
     // Load the current file's schema
     const currentFileContent = readKiwiFile(filePath);
     fileContents.set(filePath, currentFileContent);
-    const schema = schemaStore.loadTextSchema(params.textDocument.uri);
+    const schema = fileStore.loadTextSchema(params.textDocument.uri);
     if (!schema) {
       return null;
     }
     allSchemas.set(filePath, schema);
 
     // Load all dependency files' schemas
-    const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
+    const includedSchemas = fileStore.loadIncludedSchemas(filePath);
     for (const [path, schema] of includedSchemas) {
       allSchemas.set(path, schema);
       const content = readKiwiFile(path);

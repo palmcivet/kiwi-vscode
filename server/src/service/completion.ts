@@ -1,6 +1,6 @@
 import type { CompletionItem, TextDocumentPositionParams } from 'vscode-languageserver/node';
 import type { Schema } from '../parser';
-import type { SchemaStore } from './store';
+import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
 import { CompletionItemKind } from 'vscode-languageserver/node';
 import { fileUriToPath, NativeTypes } from '../parser';
@@ -10,12 +10,12 @@ import { fileUriToPath, NativeTypes } from '../parser';
  * Handles code completion requests and provides relevant suggestions based on context.
  *
  * @param connection - The server connection instance for communication
- * @param schemaStore - Store managing schema documents and their dependencies
+ * @param fileStore - Store managing schema documents and their dependencies
  */
-export function setupOnCompletion(connection: ServerConnection, schemaStore: SchemaStore): void {
+export function setupOnCompletion(connection: ServerConnection, fileStore: FileStore): void {
   connection.onCompletion(
     (textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-      const document = schemaStore.getTextDocument(textDocumentPosition.textDocument.uri);
+      const document = fileStore.getTextDocument(textDocumentPosition.textDocument.uri);
       if (!document) {
         return [];
       }
@@ -27,7 +27,7 @@ export function setupOnCompletion(connection: ServerConnection, schemaStore: Sch
       const allSchemas = new Map<string, Schema>();
 
       // Load schema for current file
-      const schema = schemaStore.loadTextSchema(textDocumentPosition.textDocument.uri);
+      const schema = fileStore.loadTextSchema(textDocumentPosition.textDocument.uri);
       if (!schema) {
         connection.console.error(`No schema found for ${filePath}`);
         return [];
@@ -35,7 +35,7 @@ export function setupOnCompletion(connection: ServerConnection, schemaStore: Sch
       allSchemas.set(filePath, schema);
 
       // Load schemas from all included files
-      const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
+      const includedSchemas = fileStore.loadIncludedSchemas(filePath);
       for (const [path, schema] of includedSchemas) {
         allSchemas.set(path, schema);
       }

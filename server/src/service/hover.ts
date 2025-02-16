@@ -1,6 +1,6 @@
 import type { CancellationToken, Hover, HoverParams } from 'vscode-languageserver/node';
 import type { Definition, Field } from '../parser';
-import type { SchemaStore } from './store';
+import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
 import {
   isInsideFieldsDefinition,
@@ -28,9 +28,9 @@ const KEYWORD_DOCS: Record<string, string> = {
     'An object whose fields are optional. The default structure in a kiwi document.',
 };
 
-export function setupOnHover(connection: ServerConnection, schemaStore: SchemaStore): void {
+export function setupOnHover(connection: ServerConnection, fileStore: FileStore): void {
   connection.onHover((params: HoverParams, _token: CancellationToken): Hover => {
-    const schema = schemaStore.loadTextSchema(params.textDocument.uri);
+    const schema = fileStore.loadTextSchema(params.textDocument.uri);
 
     if (!schema) {
       return { contents: [] };

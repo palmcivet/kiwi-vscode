@@ -1,6 +1,6 @@
 import type { Location, ReferenceParams } from 'vscode-languageserver/node';
 import type { FilePosition, Schema } from '../parser';
-import type { SchemaStore } from './store';
+import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
 import { isInsideRange } from '../helper';
 import { convertPosition, fileUriToPath, pathToFileUri, readKiwiFile } from '../parser';
@@ -16,12 +16,12 @@ import { convertPosition, fileUriToPath, pathToFileUri, readKiwiFile } from '../
  * 3. Supporting cross-file reference lookup
  *
  * @param connection - The server connection instance for communication
- * @param schemaStore - Store managing schema documents and their dependencies
+ * @param fileStore - Store managing schema documents and their dependencies
  */
-export function setupOnReference(connection: ServerConnection, schemaStore: SchemaStore): void {
+export function setupOnReference(connection: ServerConnection, fileStore: FileStore): void {
   connection.onReferences(
     (params: ReferenceParams): Location[] => {
-      const document = schemaStore.getTextDocument(params.textDocument.uri);
+      const document = fileStore.getTextDocument(params.textDocument.uri);
       if (!document) {
         return [];
       }
@@ -36,14 +36,14 @@ export function setupOnReference(connection: ServerConnection, schemaStore: Sche
       // Load the current file's schema
       const currentFileContent = readKiwiFile(filePath);
       fileContents.set(filePath, currentFileContent);
-      const schema = schemaStore.loadTextSchema(params.textDocument.uri);
+      const schema = fileStore.loadTextSchema(params.textDocument.uri);
       if (!schema) {
         return [];
       }
       allSchemas.set(filePath, schema);
 
       // Load all dependency files' schemas
-      const includedSchemas = schemaStore.loadIncludedSchemas(filePath);
+      const includedSchemas = fileStore.loadIncludedSchemas(filePath);
       for (const [path, schema] of includedSchemas) {
         allSchemas.set(path, schema);
         const content = readKiwiFile(path);

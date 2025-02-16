@@ -1,13 +1,13 @@
 import type { InitializeParams, InitializeResult } from 'vscode-languageserver/node';
 import type { ServerConnection } from './type';
 import { CodeActionKind, TextDocumentSyncKind } from 'vscode-languageserver/node';
-import { serverStore } from './store';
+import { configStore } from '../store';
 
 export function setupOnInitialize(connection: ServerConnection): void {
   connection.onInitialize(({ capabilities }: InitializeParams) => {
-    serverStore.setWorkspaceFolderCapability(!!(capabilities.workspace && !!capabilities.workspace.workspaceFolders));
+    configStore.setWorkspaceFolderCapability(!!(capabilities.workspace && !!capabilities.workspace.workspaceFolders));
 
-    serverStore.setDiagnosticRelatedInformationCapability(!!(
+    configStore.setDiagnosticRelatedInformationCapability(!!(
       capabilities.textDocument
       && capabilities.textDocument.publishDiagnostics
       && capabilities.textDocument.publishDiagnostics.relatedInformation
@@ -31,7 +31,7 @@ export function setupOnInitialize(connection: ServerConnection): void {
         },
       },
     };
-    if (serverStore.hasWorkspaceFolders()) {
+    if (configStore.hasWorkspaceFolders()) {
       result.capabilities.workspace = {
         workspaceFolders: {
           supported: true,

@@ -10,21 +10,21 @@ import {
   setupOnInitialize,
   setupOnReference,
 } from './service';
-import { SchemaStore } from './service/store';
+import { FileStore } from './store';
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
-const schemaStore = new SchemaStore(connection.console, documents);
+const fileStore = new FileStore(connection.console, documents);
 
 setupOnInitialize(connection);
-setupOnDidChangeContent(connection, documents);
+setupOnDidChangeContent(connection, fileStore);
 
-setupOnCompletion(connection, schemaStore);
-setupOnHover(connection, schemaStore);
-setupOnReference(connection, schemaStore);
-setupOnDefinition(connection, schemaStore);
-setupOnDocumentSymbol(connection, schemaStore);
-setupOnCodeAction(connection, schemaStore);
+setupOnCompletion(connection, fileStore);
+setupOnHover(connection, fileStore);
+setupOnReference(connection, fileStore);
+setupOnDefinition(connection, fileStore);
+setupOnDocumentSymbol(connection, fileStore);
+setupOnCodeAction(connection, fileStore);
 
 documents.listen(connection);
 connection.listen();

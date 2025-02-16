@@ -5,33 +5,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { parseIncludes, parseSchema } from '../parser';
 
-class ServerStore {
-  private hasWorkspaceFolderCapability: boolean;
-  private hasDiagnosticRelatedInformationCapability: boolean;
-
-  constructor() {
-    this.hasWorkspaceFolderCapability = false;
-    this.hasDiagnosticRelatedInformationCapability = false;
-  }
-
-  public setWorkspaceFolderCapability(value: boolean): void {
-    this.hasWorkspaceFolderCapability = value;
-  }
-
-  public hasWorkspaceFolders(): boolean {
-    return this.hasWorkspaceFolderCapability;
-  }
-
-  public setDiagnosticRelatedInformationCapability(value: boolean): void {
-    this.hasDiagnosticRelatedInformationCapability = value;
-  }
-
-  public hasDiagnosticRelatedInformation(): boolean {
-    return this.hasDiagnosticRelatedInformationCapability;
-  }
-}
-
-export class SchemaStore {
+export class FileStore {
   private readonly console: RemoteConsole & _;
   private readonly documents: TextDocuments<TextDocument>;
   private readonly schemas: Record<string, Schema>;
@@ -40,6 +14,10 @@ export class SchemaStore {
     this.console = console;
     this.documents = documents;
     this.schemas = {};
+  }
+
+  public getDocuments(): TextDocuments<TextDocument> {
+    return this.documents;
   }
 
   public getTextDocument(uri: string): TextDocument | undefined {
@@ -102,5 +80,3 @@ export class SchemaStore {
     return schemas;
   }
 }
-
-export const serverStore = new ServerStore();

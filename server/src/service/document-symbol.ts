@@ -1,11 +1,11 @@
 import type { DocumentSymbol, DocumentSymbolParams } from 'vscode-languageserver/node';
-import type { SchemaStore } from './store';
+import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
 import { SymbolKind } from 'vscode-languageserver/node';
 
-export function setupOnDocumentSymbol(connection: ServerConnection, schemaStore: SchemaStore): void {
+export function setupOnDocumentSymbol(connection: ServerConnection, fileStore: FileStore): void {
   connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => {
-    const schema = schemaStore.loadTextSchema(params.textDocument.uri);
+    const schema = fileStore.loadTextSchema(params.textDocument.uri);
 
     if (!schema) {
       return [];
