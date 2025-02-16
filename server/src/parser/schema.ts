@@ -1,4 +1,4 @@
-import type { Range } from 'vscode-languageserver';
+import type { Range } from 'vscode-languageserver/node';
 
 export interface Token {
   text: string;
@@ -14,9 +14,7 @@ export type DefinitionKind = 'ENUM' | 'STRUCT' | 'MESSAGE';
 
 export interface Definition {
   keywordSpan: Range;
-  /**
-   * Span from start of keyword to closing curly brace
-   */
+  /** Span from start of keyword to closing curly brace */
   defSpan: Range;
   name: string;
   nameSpan: Range;
@@ -26,9 +24,7 @@ export interface Definition {
 }
 
 export interface Field {
-  /**
-   * Span from type to semicolon
-   */
+  /** Span from type to semicolon */
   span: Range;
   name: string;
   nameSpan: Range;

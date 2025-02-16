@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import * as process from 'node:process';
 
 import { runTests } from '@vscode/test-electron';
 
@@ -17,7 +18,6 @@ async function main() {
   }
   catch {
     console.error('Failed to run tests');
-    // eslint-disable-next-line node/prefer-global/process
     process.exit(1);
   }
 }

@@ -1,17 +1,11 @@
-/* eslint-disable ts/no-use-before-define */
 /* eslint-disable no-cond-assign */
 import type { Definition, DefinitionKind, Field, Schema, Token } from './schema';
-import type { KiwiParseError } from './util';
 import { sentenceCase } from 'change-case';
-import {
-  combineRanges,
-  createError,
-  endOfRange,
-  error,
-  quote,
-} from './util';
+import { combineRanges, endOfRange, quote } from '../helper';
+import { createError, KiwiParseError } from './error';
 
-export const nativeTypes = [
+// Native types supported by the Kiwi
+export const NativeTypes = [
   'bool',
   'byte',
   'float',
@@ -23,15 +17,16 @@ export const nativeTypes = [
 ];
 
 // These are special names on the object returned by compileSchema()
-export const reservedNames = [
+const ReservedNames = [
   'ByteBuffer',
   'package',
   'enum',
   'struct',
   'message',
-  ...nativeTypes,
+  ...NativeTypes,
 ];
 
+// Regular expressions for lexical analysis
 const regex
   = /((?:-|\b)\d+\b|[=;{}]|\[\]|\[deprecated\]|\b[A-Za-z_]\w*\b|\/\/.*|\s+)/g;
 const identifier = /^[A-Z_]\w*$/i;
@@ -49,9 +44,17 @@ const messageKeyword = /^message$/;
 const packageKeyword = /^package$/;
 const deprecatedToken = /^\[deprecated\]$/;
 
-export function tokenize(text: string): [Token[], KiwiParseError[]] {
+/**
+ * Performs lexical analysis on the input text to generate tokens.
+ * @param text The source code text to tokenize
+ * @returns A tuple containing:
+ * - An array of tokens extracted from the text
+ * - An array of any syntax errors encountered during tokenization
+ */
+function tokenize(text: string): [Token[], KiwiParseError[]] {
   const errors: KiwiParseError[] = [];
 
+  // Split text into tokens using the main regex pattern
   const parts = text.split(regex);
   const tokens: Token[] = [];
   let column = 0;
@@ -73,7 +76,7 @@ export function tokenize(text: string): [Token[], KiwiParseError[]] {
       }
     }
 
-    // Detect syntax errors
+    // Handle invalid tokens (syntax errors)
     else if (part !== '') {
       errors.push(
         createError(`Invalid token: ${quote(part)}`, {
@@ -91,7 +94,7 @@ export function tokenize(text: string): [Token[], KiwiParseError[]] {
     column += lines[lines.length - 1].length;
   }
 
-  // End-of-file token
+  // Add end-of-file token
   tokens.push({
     text: '',
     span: {
@@ -103,8 +106,17 @@ export function tokenize(text: string): [Token[], KiwiParseError[]] {
   return [tokens, errors];
 }
 
+/**
+ * Parses a sequence of tokens into a Kiwi schema.
+ * Handles package declarations, enum/struct/message definitions, and their fields.
+ * @param tokens Array of tokens from lexical analysis
+ * @returns A tuple containing the parsed schema and any parsing errors
+ */
 function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
   const errors: KiwiParseError[] = [];
+  let index = 0;
+
+  // Helper functions for token processing
   function current(): Token {
     return tokens[index];
   }
@@ -121,16 +133,14 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
   function expect(test: RegExp, expected: string): Token {
     const token = current();
     if (!eat(test)) {
-      error(`Expected ${expected} but found ${quote(token.text)}`, token.span);
+      throw new KiwiParseError(`Expected ${expected} but found ${quote(token.text)}`, token.span);
     }
-
     return token;
   }
 
   const definitions: Definition[] = [];
   let packageKeywordToken = null;
   let packageIdent = null;
-  let index = 0;
 
   if ((packageKeywordToken = eat(packageKeyword))) {
     packageIdent = eat(identifier);
@@ -292,11 +302,6 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
         errors.push(createError('Expected ";"', endOfRange(range)));
       }
 
-      if (name?.text === 'WidgetHoverStyle') {
-        // eslint-disable-next-line no-console
-        console.log({ c: current() });
-      }
-
       const fullSpan = combineRanges(
         field.span,
         type?.span || field.span,
@@ -342,17 +347,30 @@ function parse(tokens: Token[]): [Schema, KiwiParseError[]] {
   ];
 }
 
+/**
+ * Performs semantic validation on the parsed schema.
+ * Checks for:
+ * - Type existence and conflicts with native types
+ * - Duplicate definitions
+ * - Reserved name usage
+ * - Field type validity
+ * - Duplicate field names/IDs
+ * - Valid field ID ranges
+ * - Recursive struct nesting
+ * @param root The schema to validate
+ * @returns Array of validation errors
+ */
 function verify(root: Schema): KiwiParseError[] {
   const errors: KiwiParseError[] = [];
-
-  const definedTypes = nativeTypes.slice();
+  const definedTypes = NativeTypes.slice();
   const definitions: { [name: string]: Definition } = {};
 
-  // Define definitions
+  // First pass: Check for type conflicts and duplicates
   for (let i = 0; i < root.definitions.length; i++) {
     const definition = root.definitions[i];
 
-    const nativeDefinition = nativeTypes.find(v => v === definition.name);
+    // Check for conflicts with native types
+    const nativeDefinition = NativeTypes.find(v => v === definition.name);
     if (nativeDefinition) {
       errors.push(
         createError(
@@ -375,7 +393,7 @@ function verify(root: Schema): KiwiParseError[] {
         ),
       );
     }
-    if (reservedNames.includes(definition.name)) {
+    if (ReservedNames.includes(definition.name)) {
       errors.push(
         createError(
           `The type name ${quote(definition.name)} is reserved`,

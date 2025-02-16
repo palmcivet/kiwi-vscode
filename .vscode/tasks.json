@@ -7,9 +7,12 @@
       "group": "build",
       "presentation": {
         "panel": "dedicated",
-        "reveal": "never"
+        "reveal": "never",
+        "close": true
       },
-      "problemMatcher": ["$tsc"]
+      "problemMatcher": [
+        "$tsc"
+      ]
     },
     {
       "type": "npm",
@@ -21,9 +24,12 @@
       },
       "presentation": {
         "panel": "dedicated",
-        "reveal": "never"
+        "reveal": "never",
+        "close": true
       },
-      "problemMatcher": ["$tsc-watch"]
+      "problemMatcher": [
+        "$tsc-watch"
+      ]
     }
   ]
 }

@@ -22,7 +22,7 @@
       }
     },
     {
-      "name": "Language Client E2E Test",
+      "name": "Launch Client E2E Test",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
@@ -34,6 +34,25 @@
       "outFiles": [
         "${workspaceRoot}/client/out/test/**/*.js"
       ]
+    },
+    {
+      "name": "Launch Server Unit Test",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
+      "args": [
+        "${workspaceRoot}/server/out/test"
+      ],
+      "cwd": "${workspaceRoot}",
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceRoot}/server/out/test/**/*.js",
+        "${workspaceRoot}/server/out/**/*.js"
+      ],
+      "preLaunchTask": {
+        "type": "npm",
+        "script": "watch"
+      }
     }
   ]
 }
