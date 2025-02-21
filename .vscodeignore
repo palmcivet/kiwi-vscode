@@ -1,6 +1,7 @@
 .vscode/**
 dist/**
 fixture/**
+tree-sitter-kiwi/**
 **/*.ts
 **/*.map
 **/*.vsix

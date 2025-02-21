@@ -24,6 +24,10 @@
     [
       "`",
       "`"
+    ],
+    [
+      "\"",
+      "\""
     ]
   ],
   "surroundingPairs": [
@@ -34,6 +38,14 @@
     [
       "`",
       "`"
+    ],
+    [
+      "\"",
+      "\""
     ]
-  ]
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "^.*\\{[^}]*$",
+    "decreaseIndentPattern": "^\\s*\\}"
+  }
 }

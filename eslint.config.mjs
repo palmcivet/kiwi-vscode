@@ -7,6 +7,7 @@ export default antfu({
     'client/out/**',
     'server/node_modules/**',
     'server/out/**',
+    '**/*.toml',
   ],
   stylistic: {
     semi: true,

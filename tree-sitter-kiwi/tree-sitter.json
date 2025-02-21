@@ -1,0 +1,34 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "kiwi",
+      "camelcase": "Kiwi",
+      "scope": "source.kiwi",
+      "file-types": [
+        "kiwi"
+      ],
+      "injection-regex": "^kiwi$",
+      "class-name": "TreeSitterKiwi"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "Kiwi message format grammars for tree-sitter",
+    "authors": [
+      {
+        "name": "Palm Civet"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/palmcivet/kiwi-vscode/tree-sitter-kiwi"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "node": true,
+    "rust": true,
+    "swift": true
+  }
+}

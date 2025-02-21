@@ -1,0 +1,17 @@
+{
+  "name": "tree-sitter-kiwi",
+  "private": true,
+  "description": "Implementation of the LSP server for kiwi in VSCode.",
+  "scripts": {
+    "parse": "tree-sitter parse",
+    "predev": "pnpm build:wasm",
+    "dev": "tree-sitter playground",
+    "build:wasm": "tree-sitter build --wasm",
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test"
+  },
+  "devDependencies": {
+    "tree-sitter": "^0.22.4",
+    "tree-sitter-cli": "^0.25.1"
+  }
+}
