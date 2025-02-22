@@ -1,5 +1,5 @@
+import type { FileStore } from '@server/store';
 import type { DocumentSymbol, DocumentSymbolParams } from 'vscode-languageserver/node';
-import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
 import { SymbolKind } from 'vscode-languageserver/node';
 

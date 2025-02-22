@@ -7,7 +7,7 @@ import {
   isInsideRange,
   isInsideTypeReference,
   isPositionInRange,
-} from '../helper';
+} from '@server/helper';
 
 describe('range utilities', () => {
   describe('combineRanges', () => {

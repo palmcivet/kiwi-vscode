@@ -4,15 +4,19 @@
     "lib": [
       "es2020"
     ],
-    "rootDir": "src",
+    "baseUrl": "./",
     "module": "commonjs",
     "moduleResolution": "node",
+    "paths": {
+      "@server/*": ["./src/*"]
+    },
     "strict": true,
-    "outDir": "out",
+    "outDir": "./out",
     "sourceMap": true
   },
   "include": [
-    "src"
+    "src",
+    "test"
   ],
   "exclude": [
     "node_modules",

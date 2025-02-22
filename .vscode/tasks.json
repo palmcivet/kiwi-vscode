@@ -2,33 +2,33 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "type": "npm",
-      "script": "build",
-      "group": "build",
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "never",
-        "close": true
-      },
-      "problemMatcher": [
-        "$tsc"
-      ]
-    },
-    {
-      "type": "npm",
-      "script": "watch",
+      "label": "watch",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "watch"
+      ],
       "isBackground": true,
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
       "presentation": {
-        "panel": "dedicated",
-        "reveal": "never",
-        "close": true
+        "close": true,
+        "reveal": "always"
       },
       "problemMatcher": [
-        "$tsc-watch"
+        {
+          "pattern": [
+            {
+              "regexp": "^.*$",
+              "file": 1,
+              "location": 2,
+              "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*CLI Building.*$",
+            "endsPattern": "^.*CLI Watching for changes.*$"
+          }
+        }
       ]
     }
   ]

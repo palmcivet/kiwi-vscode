@@ -1,9 +1,15 @@
 {
-  "name": "kiwi-vscode-lsp-client",
+  "name": "vscode-lsp-client",
   "private": true,
   "description": "Implementation of the LSP client for kiwi in VSCode.",
   "engines": {
     "vscode": "^1.75.0"
+  },
+  "scripts": {
+    "clean": "rimraf out",
+    "watch": "tsup --watch --sourcemap",
+    "build": "PRODUCTION=true tsup --clean --minify",
+    "test": "tsup"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

@@ -1,9 +1,9 @@
+import type { Schema } from '@server/parser';
+import type { FileStore } from '@server/store';
 import type { CompletionItem, TextDocumentPositionParams } from 'vscode-languageserver/node';
-import type { Schema } from '../parser';
-import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
+import { fileUriToPath, NativeTypes } from '@server/parser';
 import { CompletionItemKind } from 'vscode-languageserver/node';
-import { fileUriToPath, NativeTypes } from '../parser';
 
 /**
  * Sets up completion provider for the language server.

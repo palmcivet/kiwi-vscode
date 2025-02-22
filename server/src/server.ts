@@ -1,5 +1,3 @@
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { createConnection, ProposedFeatures, TextDocuments } from 'vscode-languageserver/node';
 import {
   setupOnCodeAction,
   setupOnCompletion,
@@ -9,8 +7,10 @@ import {
   setupOnHover,
   setupOnInitialize,
   setupOnReference,
-} from './service';
-import { FileStore } from './store';
+} from '@server/service';
+import { FileStore } from '@server/store';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { createConnection, ProposedFeatures, TextDocuments } from 'vscode-languageserver/node';
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);

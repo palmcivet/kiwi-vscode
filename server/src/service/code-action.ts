@@ -1,9 +1,9 @@
+import type { Definition } from '@server/parser';
+import type { FileStore } from '@server/store';
 import type { CodeAction, CodeActionParams } from 'vscode-languageserver/node';
-import type { Definition } from '../parser';
-import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
+import { isInsideRange } from '@server/helper';
 import { CodeActionKind, TextEdit } from 'vscode-languageserver/node';
-import { isInsideRange } from '../helper';
 
 function getNextId(def: Definition): number | undefined {
   if (def.kind !== 'MESSAGE') {

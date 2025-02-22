@@ -74,6 +74,30 @@ package/base-1.kiwi ----> package/derived.kiwi
 package/base-2.kiwi    /
 ```
 
+## 构建方式
+
+原始项目使用 `tsc` 编译代码，没有使用 bundler，在打包插件时 `vsce` 会提示以下信息：
+
+```bash
+This extension consists of 590 files, out of which 341 are JavaScript files. For performance reasons, you should bundle your extension: https://aka.ms/vscode-bundle-extension
+....
+kiwi-vscode-1.0.3.vsix (590 files, 759.55KB)
+```
+
+优化后采用 tsup 构建，并且使用 *pnpm workspace* 来管理 `server/` 和 `client/` 两个模块，原始构建产物如下：
+
+```bash
+client build: CJS out/extension.js 1.02 KB
+client build: CJS ⚡️ Build success in 27ms
+client build: Done
+server build: CJS out/server.js 19.45 KB
+server build: CJS ⚡️ Build success in 111ms
+...
+kiwi-vscode-1.0.3.vsix (11 files, 131.39 KB)
+```
+
+压缩后的插件包体积减小了 80%，解压后的文件则更加精简。
+
 ## 致谢
 
 - [Cursor](https://www.cursor.com/)

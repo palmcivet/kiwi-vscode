@@ -1,9 +1,15 @@
 {
-  "name": "kiwi-vscode-lsp-server",
+  "name": "vscode-lsp-server",
   "private": true,
   "description": "Implementation of the LSP server for kiwi in VSCode.",
   "engines": {
     "node": "*"
+  },
+  "scripts": {
+    "clean": "rimraf out",
+    "watch": "tsup --watch --sourcemap",
+    "build": "PRODUCTION=true tsup --clean --minify",
+    "test": "tsup && mocha ./out/**/*.test.js"
   },
   "dependencies": {
     "change-case": "^4",

@@ -1,8 +1,21 @@
+import type { KiwiParseError, Schema } from '@server/parser';
+import type { FileStore } from '@server/store';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { Diagnostic, DocumentDiagnosticReport } from 'vscode-languageserver/node';
-import type { KiwiParseError, Schema } from '../parser';
-import type { FileStore } from '../store';
 import type { ServerConnection } from './type';
+import {
+  isCamelCase,
+  isPascalCase,
+  isScreamingSnakeCase,
+} from '@server/helper';
+import {
+  convertPosition,
+  fileUriToPath,
+  isPositionInFile,
+  parseSchema,
+  readKiwiFile,
+} from '@server/parser';
+import { configStore } from '@server/store';
 import { camelCase, constantCase, pascalCase, sentenceCase } from 'change-case';
 import {
   DiagnosticRelatedInformation,
@@ -10,19 +23,6 @@ import {
   DiagnosticTag,
   DocumentDiagnosticReportKind,
 } from 'vscode-languageserver/node';
-import {
-  isCamelCase,
-  isPascalCase,
-  isScreamingSnakeCase,
-} from '../helper';
-import {
-  convertPosition,
-  fileUriToPath,
-  isPositionInFile,
-  parseSchema,
-  readKiwiFile,
-} from '../parser';
-import { configStore } from '../store';
 
 /**
  * Validates a text document and generates diagnostics.

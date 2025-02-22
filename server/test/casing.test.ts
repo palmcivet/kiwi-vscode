@@ -1,5 +1,5 @@
 import * as assert from 'node:assert';
-import { isCamelCase, isPascalCase, isScreamingSnakeCase } from '../helper';
+import { isCamelCase, isPascalCase, isScreamingSnakeCase } from '@server/helper';
 
 describe('casing utilities', () => {
   it('isCamelCase', () => {

@@ -1,9 +1,9 @@
+import type { Schema } from '@server/parser';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { _, RemoteConsole, TextDocuments } from 'vscode-languageserver/node';
-import type { Schema } from '../parser';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { parseIncludes, parseSchema } from '../parser';
+import { parseIncludes, parseSchema } from '@server/parser';
 
 export class FileStore {
   private readonly console: RemoteConsole & _;

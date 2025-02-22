@@ -1,9 +1,8 @@
-// A launch configuration that compiles the extension and then opens it inside a new window
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Client",
+      "name": "Debug Client",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
@@ -15,14 +14,28 @@
         "${workspaceRoot}/client/out/**/*.js",
         "${workspaceRoot}/server/out/**/*.js"
       ],
+      "sourceMaps": true,
       "autoAttachChildProcesses": true,
-      "preLaunchTask": {
-        "type": "npm",
-        "script": "watch"
-      }
+      "preLaunchTask": "watch"
     },
     {
-      "name": "Launch Client E2E Test",
+      "name": "Unit Test",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
+      "args": [
+        "${workspaceRoot}/server/out/**/*.test.js"
+      ],
+      "cwd": "${workspaceRoot}",
+      "sourceMaps": true,
+      "internalConsoleOptions": "openOnSessionStart",
+      "outFiles": [
+        "${workspaceRoot}/server/out/**/*.test.js"
+      ],
+      "preLaunchTask": "watch"
+    },
+    {
+      "name": "E2E Test",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
@@ -34,25 +47,6 @@
       "outFiles": [
         "${workspaceRoot}/client/out/test/**/*.js"
       ]
-    },
-    {
-      "name": "Launch Server Unit Test",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
-      "args": [
-        "${workspaceRoot}/server/out/test"
-      ],
-      "cwd": "${workspaceRoot}",
-      "sourceMaps": true,
-      "outFiles": [
-        "${workspaceRoot}/server/out/test/**/*.js",
-        "${workspaceRoot}/server/out/**/*.js"
-      ],
-      "preLaunchTask": {
-        "type": "npm",
-        "script": "watch"
-      }
     }
   ]
 }

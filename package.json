@@ -2,7 +2,7 @@
   "publisher": "palmcivet",
   "name": "kiwi-vscode",
   "displayName": "Kiwi VSCode",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "Better support for the Kiwi message format in VSCode.",
   "author": "Palm Civet",
@@ -45,26 +45,25 @@
     ]
   },
   "scripts": {
-    "postinstall": "cd ./client && npm install && cd ../server && npm install && cd ..",
-    "vscode:prepublish": "npm run build",
-    "package": "npx vsce package",
-    "prebuild": "npm run clean",
-    "build": "tsc -b",
-    "watch": "tsc -b -w",
-    "clean": "rimraf ./{client,server}/out ./dist",
-    "test": "npm run test:server && npm run test:client",
-    "test:server": "npm run build && mocha ./server/out/test",
-    "test:client": "npm run build && node ./client/out/test",
+    "preinstall": "npx -y only-allow pnpm",
+    "vscode:prepublish": "pnpm build",
+    "package": "vsce package --no-dependencies",
+    "watch": "pnpm --filter='*' watch",
+    "clean": "pnpm --parallel --filter='*' clean",
+    "build": "pnpm --parallel --filter='*' build",
+    "test": "pnpm --parallel --filter='*' test",
     "lint": "eslint ."
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.1.1",
     "@types/mocha": "^10.0.6",
     "@types/node": "^18.14.6",
+    "@vscode/vsce": "^3.2.2",
     "eslint": "^9.0.0",
     "glob": "^11.0.1",
     "mocha": "^10.3.0",
     "rimraf": "^6.0.1",
+    "tsup": "^8.3.6",
     "typescript": "^5.3.3"
   }
 }

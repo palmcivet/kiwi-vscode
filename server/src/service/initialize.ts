@@ -1,7 +1,7 @@
 import type { InitializeParams, InitializeResult } from 'vscode-languageserver/node';
 import type { ServerConnection } from './type';
+import { configStore } from '@server/store';
 import { CodeActionKind, TextDocumentSyncKind } from 'vscode-languageserver/node';
-import { configStore } from '../store';
 
 export function setupOnInitialize(connection: ServerConnection): void {
   connection.onInitialize(({ capabilities }: InitializeParams) => {

@@ -4,14 +4,17 @@
     "lib": [
       "es2020"
     ],
-    "rootDir": "src",
+    "rootDir": "./",
     "module": "commonjs",
+    "paths": {
+      "@client/*": ["./src/*"]
+    },
     "strict": true,
-    "outDir": "out",
     "sourceMap": true
   },
   "include": [
-    "src"
+    "src",
+    "test"
   ],
   "exclude": [
     "node_modules",

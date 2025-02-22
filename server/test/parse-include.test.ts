@@ -8,7 +8,7 @@ import {
   parseIncludes,
   pathToFileUri,
   readKiwiFile,
-} from '../parser/parse-include';
+} from '@server/parser';
 
 describe('parse include utilities', () => {
   describe('parseIncludes', () => {

@@ -1,13 +1,13 @@
+import type { Definition, Field } from '@server/parser';
+import type { FileStore } from '@server/store';
 import type { CancellationToken, Hover, HoverParams } from 'vscode-languageserver/node';
-import type { Definition, Field } from '../parser';
-import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
 import {
   isInsideFieldsDefinition,
   isInsideLineRange,
   isInsideRange,
   isInsideTypeReference,
-} from '../helper';
+} from '@server/helper';
 
 const PRIMITIVE_TYPE_DOCS: Record<string, string> = {
   bool: 'A value that stores either true or false',

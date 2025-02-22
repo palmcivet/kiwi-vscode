@@ -1,8 +1,8 @@
+import type { FilePosition, Schema } from '@server/parser';
+import type { FileStore } from '@server/store';
 import type { Location, ReferenceParams } from 'vscode-languageserver/node';
-import type { FilePosition, Schema } from '../parser';
-import type { FileStore } from '../store/file-store';
 import type { ServerConnection } from './type';
-import { isInsideRange } from '../helper';
+import { isInsideRange } from '@server/helper';
 import { convertPosition, fileUriToPath, pathToFileUri, readKiwiFile } from '../parser';
 
 /**

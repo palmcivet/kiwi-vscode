@@ -1,7 +1,7 @@
 /* eslint-disable no-cond-assign */
 import type { Definition, DefinitionKind, Field, Schema, Token } from './schema';
+import { combineRanges, endOfRange, quote } from '@server/helper';
 import { sentenceCase } from 'change-case';
-import { combineRanges, endOfRange, quote } from '../helper';
 import { createError, KiwiParseError } from './error';
 
 // Native types supported by the Kiwi
