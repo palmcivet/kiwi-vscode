@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="300" src="https://github.com/palmcivet/kiwi-vscode/blob/master/assets/brand-logo.png?raw=true" alt="Kiwi VSCode brand logo" />
+</p>
+
 # Kiwi VSCode
 
 [English](./README.md) | 中文
@@ -98,6 +102,12 @@ kiwi-vscode-1.0.3.vsix (11 files, 131.39 KB)
 
 压缩后的插件包体积减小了 80%，解压后的文件则更加精简。
 
+## Logo
+
+Logo 使用 [Slea.ai](https://slea.ai/) 生成。提示词如下：
+
+> a vector logo design, with the text "Kiwi", main symbol: Messages, binary, code, programming language, the background is circular, Minimalistic, be used in Internet industry, clear background.
+
 ## 致谢
 
 - [Cursor](https://www.cursor.com/)
@@ -105,4 +115,4 @@ kiwi-vscode-1.0.3.vsix (11 files, 131.39 KB)
 
 ## 协议
 
-MIT
+[MIT](./LICENSE.md)

@@ -2,6 +2,8 @@
 .vscode/**
 fixture/**
 tree-sitter-kiwi/**
+assets/**
+!assets/icon.png
 **/*.ts
 **/*.map
 **/*.vsix
