@@ -1,6 +1,7 @@
 import type { ExtensionContext } from 'vscode';
 import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 import { join } from 'node:path';
+import { PluginKey } from '@client/constant';
 import { workspace } from 'vscode';
 import { LanguageClient, TransportKind } from 'vscode-languageclient/node';
 
@@ -22,6 +23,9 @@ export function activate(context: ExtensionContext) {
     synchronize: {
       fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
     },
+    initializationOptions: {
+      enableWarningDiagnostics: workspace.getConfiguration(PluginKey).get('enableWarningDiagnostics'),
+    },
   };
 
   client = new LanguageClient(
@@ -29,6 +33,20 @@ export function activate(context: ExtensionContext) {
     'Kiwi Language Server',
     serverOptions,
     clientOptions,
+  );
+
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration((event) => {
+      if (!event.affectsConfiguration(PluginKey)) {
+        return;
+      }
+
+      client.sendNotification('workspace/didChangeConfiguration', {
+        settings: {
+          enableWarningDiagnostics: workspace.getConfiguration(PluginKey).get('enableWarningDiagnostics'),
+        },
+      });
+    }),
   );
 
   client.start();

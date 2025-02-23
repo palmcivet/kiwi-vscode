@@ -1,10 +1,12 @@
 class ConfigStore {
   private hasWorkspaceFolderCapability: boolean;
   private hasDiagnosticRelatedInformationCapability: boolean;
+  private enableWarningDiagnostics: boolean;
 
   constructor() {
     this.hasWorkspaceFolderCapability = false;
     this.hasDiagnosticRelatedInformationCapability = false;
+    this.enableWarningDiagnostics = true;
   }
 
   public setWorkspaceFolderCapability(value: boolean): void {
@@ -21,6 +23,14 @@ class ConfigStore {
 
   public hasDiagnosticRelatedInformation(): boolean {
     return this.hasDiagnosticRelatedInformationCapability;
+  }
+
+  public setEnableWarningDiagnostics(value: boolean): void {
+    this.enableWarningDiagnostics = value;
+  }
+
+  public isWarningDiagnosticsEnabled(): boolean {
+    return this.enableWarningDiagnostics;
   }
 }
 

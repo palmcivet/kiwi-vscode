@@ -1,3 +1,4 @@
+import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { strict as assert } from 'node:assert';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -7,6 +8,8 @@ import {
   isPositionInFile,
   parseIncludes,
   pathToFileUri,
+  processKiwiContent,
+  readKiwiDocument,
   readKiwiFile,
 } from '@server/parser';
 
@@ -120,6 +123,54 @@ describe('parse include utilities', () => {
     });
   });
 
+  describe('processKiwiContent', () => {
+    const testDir = path.join(__dirname, 'fixtures');
+    const mainFile = path.join(testDir, 'main.kiwi');
+    const commonFile = path.join(testDir, 'common.kiwi');
+
+    beforeEach(() => {
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true });
+      }
+      fs.writeFileSync(commonFile, 'message Common {\n  field1: string;\n}\n');
+      fs.writeFileSync(mainFile, '/// @include "common.kiwi"\nmessage Main {\n  field2: int32;\n}\n');
+    });
+
+    afterEach(() => {
+      if (fs.existsSync(testDir)) {
+        fs.rmSync(testDir, { recursive: true, force: true });
+      }
+    });
+
+    it('should process content with includes correctly', () => {
+      const content = fs.readFileSync(mainFile, 'utf8');
+      const result = processKiwiContent(content, mainFile, new Set());
+
+      assert.ok(result.content.includes('message Common'));
+      assert.ok(result.content.includes('message Main'));
+      assert.strictEqual(result.filePositions.length, 2);
+      assert.strictEqual(result.filePositions[1].filePath, mainFile);
+    });
+
+    it('should handle content without includes', () => {
+      const content = 'message Test {\n  field: string;\n}\n';
+      const result = processKiwiContent(content, mainFile, new Set());
+
+      assert.strictEqual(result.filePositions.length, 1);
+      assert.strictEqual(result.content, content);
+    });
+
+    it('should preserve line numbers in merged content', () => {
+      const content = '/// @include "common.kiwi"\n\nmessage Main {\n  field2: int32;\n}\n';
+      const result = processKiwiContent(content, mainFile, new Set());
+
+      const lines = result.content.split('\n');
+      assert.ok(lines.includes(''));
+      assert.ok(result.content.includes('message Common'));
+      assert.ok(result.content.includes('message Main'));
+    });
+  });
+
   describe('readKiwiFile', () => {
     const testDir = path.join(__dirname, 'fixtures');
     const mainFile = path.join(testDir, 'main.kiwi');
@@ -156,6 +207,63 @@ describe('parse include utilities', () => {
 
       const result = readKiwiFile(mainFile);
       assert.ok(result.content.includes('message Main'));
+    });
+  });
+
+  describe('readKiwiDocument', () => {
+    const testDir = path.join(__dirname, 'fixtures');
+    const mainFile = path.join(testDir, 'main.kiwi');
+
+    beforeEach(() => {
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true });
+      }
+    });
+
+    afterEach(() => {
+      if (fs.existsSync(testDir)) {
+        fs.rmSync(testDir, { recursive: true, force: true });
+      }
+    });
+
+    it('should process TextDocument content correctly', () => {
+      const uri = pathToFileUri(mainFile);
+      const content = '/// @include "common.kiwi"\nmessage Main {}\n';
+      const document = {
+        uri,
+        getText: () => content,
+      } as TextDocument;
+
+      const result = readKiwiDocument(document);
+      assert.ok(result.filePositions.length > 0);
+      assert.strictEqual(result.filePositions[0].filePath, mainFile);
+    });
+
+    it('should handle circular dependencies in TextDocument', () => {
+      const uri = pathToFileUri(mainFile);
+      const content = '/// @include "main.kiwi"\nmessage Main {}\n';
+      const document = {
+        uri,
+        getText: () => content,
+      } as TextDocument;
+
+      const visitedFiles = new Set([mainFile]);
+      const result = readKiwiDocument(document, visitedFiles);
+
+      assert.strictEqual(result.content, '');
+      assert.strictEqual(result.filePositions.length, 0);
+    });
+
+    it('should handle errors gracefully', () => {
+      const uri = pathToFileUri(mainFile);
+      const document = {
+        uri,
+        getText: (): string => { throw new Error('Failed to read document'); },
+      } as TextDocument;
+
+      const result = readKiwiDocument(document);
+      assert.strictEqual(result.content, '');
+      assert.strictEqual(result.filePositions.length, 0);
     });
   });
 

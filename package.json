@@ -24,6 +24,16 @@
   },
   "activationEvents": [],
   "contributes": {
+    "configuration": {
+      "title": "Kiwi",
+      "properties": {
+        "kiwi-vscode.enableWarningDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable warning diagnostics."
+        }
+      }
+    },
     "languages": [
       {
         "id": "kiwi",

@@ -13,7 +13,7 @@ import {
   fileUriToPath,
   isPositionInFile,
   parseSchema,
-  readKiwiFile,
+  readKiwiDocument,
 } from '@server/parser';
 import { configStore } from '@server/store';
 import { camelCase, constantCase, pascalCase, sentenceCase } from 'change-case';
@@ -33,7 +33,7 @@ import {
  */
 function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
   const filePath = fileUriToPath(textDocument.uri);
-  const { content: combinedText, filePositions } = readKiwiFile(filePath);
+  const { content: combinedText, filePositions } = readKiwiDocument(textDocument);
 
   let schema: Schema | undefined;
   let errors: KiwiParseError[] = [];
@@ -82,8 +82,8 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
       };
     });
 
-  // Add style diagnostics
-  if (schema) {
+  // Add style diagnostics only if warning diagnostics are enabled
+  if (schema && configStore.isWarningDiagnosticsEnabled()) {
     for (const def of schema.definitions) {
       // Skip definitions not in the current file
       if (!isPositionInFile(def.nameSpan.start.line, filePath, filePositions)) {
@@ -122,7 +122,16 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
 
           diagnostics.push({
             message: 'Enum variants should be SCREAMING_SNAKE_CASE',
-            range: field.nameSpan,
+            range: {
+              start: {
+                line: convertPosition(field.nameSpan.start.line, filePath, filePositions),
+                character: field.nameSpan.start.character,
+              },
+              end: {
+                line: convertPosition(field.nameSpan.end.line, filePath, filePositions),
+                character: field.nameSpan.end.character,
+              },
+            },
             severity: DiagnosticSeverity.Warning,
             source: 'kiwi',
             data: { kind: 'change case', newText: constantCase(field.name) },
@@ -224,17 +233,11 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
  * @param fileStore - Store managing schema documents and their dependencies
  */
 export function setupOnDidChangeContent(connection: ServerConnection, fileStore: FileStore): void {
-  const documents = fileStore.getDocuments();
   connection.languages.diagnostics.on((params) => {
-    const document = documents.get(params.textDocument.uri);
+    const document = fileStore.getTextDocument(params.textDocument.uri);
     return {
       kind: DocumentDiagnosticReportKind.Full,
       items: document ? validateTextDocument(document) : [],
     } satisfies DocumentDiagnosticReport;
-  });
-
-  documents.onDidChangeContent(({ document }) => {
-    const diagnostics = validateTextDocument(document);
-    connection.sendDiagnostics({ uri: document.uri, diagnostics });
   });
 }

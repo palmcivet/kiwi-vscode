@@ -1,3 +1,4 @@
+import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { Range } from 'vscode-languageserver/node';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -80,6 +81,73 @@ export interface FilePosition {
 }
 
 /**
+ * Processes kiwi file content and its dependencies.
+ * Handles include directives, position tracking, and content merging.
+ * This function is the core processor that:
+ * 1. Parses include directives
+ * 2. Recursively processes included files
+ * 3. Maintains line position mapping
+ * 4. Merges content while preserving original structure
+ *
+ * @param content - The content of the kiwi file to process
+ * @param filePath - The file path used for resolving relative include paths
+ * @param visitedFiles - Set of visited files to prevent circular dependencies
+ * @returns Object containing merged content and file position mappings
+ */
+export function processKiwiContent(content: string, filePath: string, visitedFiles: Set<string>): {
+  content: string;
+  filePositions: FilePosition[];
+} {
+  const includes = parseIncludes(content);
+  let currentLine = 0;
+  const filePositions: FilePosition[] = [];
+
+  // Process all included files recursively
+  const includedResults = includes.map((include) => {
+    const includePath = resolve(dirname(filePath), include.path);
+    return readKiwiFile(includePath, visitedFiles);
+  });
+
+  // Track position information for included files
+  for (const result of includedResults) {
+    if (result.content) {
+      filePositions.push(...result.filePositions.map(pos => ({
+        ...pos,
+        startLine: pos.startLine + currentLine,
+      })));
+      currentLine += result.content.split('\n').length;
+    }
+  }
+
+  // Process current file content
+  const lines = content.split('\n');
+  const includeLines = new Set(includes.map(inc => inc.range.start.line));
+
+  // Create new content array, preserving empty lines for include directives
+  // This maintains the original file structure and line numbers
+  const contentLines = lines.map((line, index) =>
+    includeLines.has(index) ? '' : line,
+  );
+
+  // Record position information for the current file
+  filePositions.push({
+    filePath,
+    startLine: currentLine,
+    lineCount: lines.length,
+  });
+
+  // Merge all content while maintaining order:
+  // 1. Included files' content first
+  // 2. Current file's content last
+  const finalContent = [
+    ...includedResults.map(r => r.content),
+    contentLines.join('\n'),
+  ].join('\n');
+
+  return { content: finalContent, filePositions };
+}
+
+/**
  * Reads and processes a kiwi file and its dependencies recursively.
  * Handles file inclusion directives and maintains position mapping information.
  *
@@ -93,7 +161,7 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
   content: string;
   filePositions: FilePosition[];
 } {
-  // Prevent circular dependencies by tracking visited files
+  // Prevent circular dependencies by checking if file was already processed
   if (visitedFiles.has(filePath)) {
     return { content: '', filePositions: [] };
   }
@@ -101,50 +169,38 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
 
   try {
     const content = readFileSync(filePath, 'utf8');
-    const includes = parseIncludes(content);
-    let currentLine = 0;
-    const filePositions: FilePosition[] = [];
+    return processKiwiContent(content, filePath, visitedFiles);
+  }
+  // eslint-disable-next-line unused-imports/no-unused-vars
+  catch (error: any) {
+    return { content: '', filePositions: [] };
+  }
+}
 
-    // Process all included files recursively
-    const includedResults = includes.map((include) => {
-      const includePath = resolve(dirname(filePath), include.path);
-      return readKiwiFile(includePath, visitedFiles);
-    });
+/**
+ * Reads and processes kiwi content and its dependencies from a TextDocument.
+ * Similar to readKiwiFile but works with in-memory document content instead of file system.
+ * This function is primarily used for handling unsaved changes in the editor.
+ *
+ * @param document - The TextDocument to process
+ * @param visitedFiles - Set of visited files to prevent circular dependencies
+ * @returns Object containing merged content and file position mappings
+ */
+export function readKiwiDocument(document: TextDocument, visitedFiles: Set<string> = new Set()): {
+  content: string;
+  filePositions: FilePosition[];
+} {
+  const filePath = fileUriToPath(document.uri);
 
-    // Track position information for included files
-    for (const result of includedResults) {
-      if (result.content) {
-        filePositions.push(...result.filePositions.map(pos => ({
-          ...pos,
-          startLine: pos.startLine + currentLine,
-        })));
-        currentLine += result.content.split('\n').length;
-      }
-    }
+  // Prevent circular dependencies by checking if file was already processed
+  if (visitedFiles.has(filePath)) {
+    return { content: '', filePositions: [] };
+  }
+  visitedFiles.add(filePath);
 
-    // Process current file content
-    const lines = content.split('\n');
-    const includeLines = new Set(includes.map(inc => inc.range.start.line));
-
-    // Create new content array, preserving empty lines for include directives
-    const contentLines = lines.map((line, index) =>
-      includeLines.has(index) ? '' : line,
-    );
-
-    // Record position information for current file
-    filePositions.push({
-      filePath,
-      startLine: currentLine,
-      lineCount: lines.length, // Use original line count including include directives
-    });
-
-    // Merge all content
-    const finalContent = [
-      ...includedResults.map(r => r.content),
-      contentLines.join('\n'),
-    ].join('\n');
-
-    return { content: finalContent, filePositions };
+  try {
+    const content = document.getText();
+    return processKiwiContent(content, filePath, visitedFiles);
   }
   // eslint-disable-next-line unused-imports/no-unused-vars
   catch (error: any) {
@@ -202,7 +258,7 @@ export function convertPosition(
   return position - filePos.startLine;
 }
 
-const fileUriPrefix = 'file://';
+const FILE_URI_PREFIX = 'file://';
 
 /**
  * Converts a file URI to a file path by removing the `file://` prefix if present.
@@ -212,7 +268,7 @@ const fileUriPrefix = 'file://';
  * @returns The file path without the `file://` prefix
  */
 export function fileUriToPath(uri: string): string {
-  return uri.startsWith(fileUriPrefix) ? uri.slice(fileUriPrefix.length) : uri;
+  return uri.startsWith(FILE_URI_PREFIX) ? uri.slice(FILE_URI_PREFIX.length) : uri;
 }
 
 /**
@@ -223,5 +279,5 @@ export function fileUriToPath(uri: string): string {
  * @returns The URI with `file://` prefix
  */
 export function pathToFileUri(path: string): string {
-  return path.startsWith(fileUriPrefix) ? path : `${fileUriPrefix}${path}`;
+  return path.startsWith(FILE_URI_PREFIX) ? path : `${FILE_URI_PREFIX}${path}`;
 }

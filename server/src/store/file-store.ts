@@ -16,10 +16,6 @@ export class FileStore {
     this.schemas = {};
   }
 
-  public getDocuments(): TextDocuments<TextDocument> {
-    return this.documents;
-  }
-
   public getTextDocument(uri: string): TextDocument | undefined {
     return this.documents.get(uri);
   }

@@ -4,14 +4,14 @@ import { configStore } from '@server/store';
 import { CodeActionKind, TextDocumentSyncKind } from 'vscode-languageserver/node';
 
 export function setupOnInitialize(connection: ServerConnection): void {
-  connection.onInitialize(({ capabilities }: InitializeParams) => {
+  connection.onInitialize(({ capabilities, initializationOptions }: InitializeParams) => {
     configStore.setWorkspaceFolderCapability(!!(capabilities.workspace && !!capabilities.workspace.workspaceFolders));
 
-    configStore.setDiagnosticRelatedInformationCapability(!!(
-      capabilities.textDocument
+    configStore.setDiagnosticRelatedInformationCapability(!!(capabilities.textDocument
       && capabilities.textDocument.publishDiagnostics
-      && capabilities.textDocument.publishDiagnostics.relatedInformation
-    ));
+      && capabilities.textDocument.publishDiagnostics.relatedInformation));
+
+    configStore.setEnableWarningDiagnostics(!!(initializationOptions?.enableWarningDiagnostics));
 
     const result: InitializeResult = {
       capabilities: {
@@ -39,5 +39,9 @@ export function setupOnInitialize(connection: ServerConnection): void {
       };
     }
     return result;
+  });
+
+  connection.onDidChangeConfiguration(({ settings }) => {
+    configStore.setEnableWarningDiagnostics(!!(settings?.enableWarningDiagnostics));
   });
 }
