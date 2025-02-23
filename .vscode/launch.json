@@ -8,7 +8,7 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceRoot}",
-        "${workspaceRoot}/fixture"
+        "${workspaceRoot}/fixtures"
       ],
       "outFiles": [
         "${workspaceRoot}/client/out/**/*.js",
@@ -42,7 +42,7 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceRoot}",
         "--extensionTestsPath=${workspaceRoot}/client/out/test/run-test",
-        "${workspaceRoot}/fixture"
+        "${workspaceRoot}/fixtures"
       ],
       "outFiles": [
         "${workspaceRoot}/client/out/test/**/*.js"

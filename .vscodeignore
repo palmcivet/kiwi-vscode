@@ -1,6 +1,6 @@
 .github/**
 .vscode/**
-fixture/**
+fixtures/**
 tree-sitter-kiwi/**
 assets/**
 !assets/icon.png
