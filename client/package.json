@@ -9,7 +9,7 @@
     "clean": "rimraf out",
     "watch": "tsup --watch --sourcemap",
     "build": "PRODUCTION=true tsup --clean --minify",
-    "test": "tsup"
+    "test": "tsup && mocha ./out/**/*.test.js"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

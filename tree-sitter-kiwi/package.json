@@ -2,13 +2,27 @@
   "name": "tree-sitter-kiwi",
   "private": true,
   "description": "Implementation of the LSP server for kiwi in VSCode.",
+  "main": "./bindings/node",
+  "types": "./bindings/node",
   "scripts": {
-    "parse": "tree-sitter parse",
-    "predev": "pnpm build:wasm",
+    "postinstall": "node-gyp-build",
+    "clean": "rimraf *.dylib *.wasm",
     "dev": "tree-sitter playground",
     "build:wasm": "tree-sitter build --wasm",
+    "test": "tree-sitter test",
     "generate": "tree-sitter generate",
-    "test": "tree-sitter test"
+  },
+  "peerDependencies": {
+    "tree-sitter": "^0.22.4"
+  },
+  "peerDependenciesMeta": {
+    "tree-sitter": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "node-addon-api": "^8.3.1",
+    "node-gyp-build": "^4.8.4"
   },
   "devDependencies": {
     "tree-sitter": "^0.22.4",

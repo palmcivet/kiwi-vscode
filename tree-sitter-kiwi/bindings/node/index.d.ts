@@ -19,7 +19,8 @@ type NodeInfo =
   });
 
 interface Language {
-  language: unknown;
+  name: string;
+  language: Language;
   nodeTypeInfo: NodeInfo[];
 }
 

@@ -57,6 +57,12 @@ importers:
       change-case:
         specifier: ^4
         version: 4.1.2
+      tree-sitter:
+        specifier: ^0.22.4
+        version: 0.22.4
+      tree-sitter-kiwi:
+        specifier: workspace:*
+        version: link:../tree-sitter-kiwi
       vscode-languageserver:
         specifier: ^9.0.1
         version: 9.0.1
@@ -65,6 +71,13 @@ importers:
         version: 1.0.12
 
   tree-sitter-kiwi:
+    dependencies:
+      node-addon-api:
+        specifier: ^8.3.1
+        version: 8.3.1
+      node-gyp-build:
+        specifier: ^4.8.4
+        version: 4.8.4
     devDependencies:
       tree-sitter:
         specifier: ^0.22.4
@@ -1584,7 +1597,7 @@ packages:
     engines: {node: '>=6'}
 
   imurmurhash@0.1.4:
-    resolution: {integrity: sha1-khi5srkoojixPcT7a21XbyMUU+o=}
+    resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
     engines: {node: '>=0.8.19'}
 
   indent-string@5.0.0:
@@ -2064,8 +2077,8 @@ packages:
   node-addon-api@4.3.0:
     resolution: {integrity: sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==}
 
-  node-addon-api@8.3.0:
-    resolution: {integrity: sha512-8VOpLHFrOQlAH+qA0ZzuGRlALRA6/LVh8QJldbrC4DY0hXoMP0l4Acq8TzFC018HztWiRqyCEj2aTWY2UvnJUg==}
+  node-addon-api@8.3.1:
+    resolution: {integrity: sha512-lytcDEdxKjGJPTLEfW4mYMigRezMlyJY8W4wxJK8zE533Jlb8L8dRuObJFWg2P+AuOIxoCgKF+2Oq4d4Zd0OUA==}
     engines: {node: ^18 || ^20 || >= 21}
 
   node-gyp-build@4.8.4:
@@ -5117,7 +5130,7 @@ snapshots:
   node-addon-api@4.3.0:
     optional: true
 
-  node-addon-api@8.3.0: {}
+  node-addon-api@8.3.1: {}
 
   node-gyp-build@4.8.4: {}
 
@@ -5702,7 +5715,7 @@ snapshots:
 
   tree-sitter@0.22.4:
     dependencies:
-      node-addon-api: 8.3.0
+      node-addon-api: 8.3.1
       node-gyp-build: 4.8.4
 
   ts-api-utils@2.0.1(typescript@5.7.3):

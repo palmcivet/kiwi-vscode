@@ -1,0 +1,36 @@
+==================
+Comment test
+==================
+
+// addad
+/// @include ssd
+
+//////  sdsdsd
+
+enum Axis//sdsd
+{ // ssdds
+  			X = 0; // aas
+ // asas 		 	  Y = 1; // sdsd
+ /// @include sds
+
+}
+
+---
+
+(source_file
+  (comment)
+  (include_directive
+    (path))
+  (comment)
+  (enum_definition
+    (space)
+    (identifier)
+    (comment)
+    (enum_body
+      (comment)
+      (enum_field
+        enum_field_name: (identifier)
+        enum_field_value: (number))
+      (comment)
+      (comment)
+      (comment))))

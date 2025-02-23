@@ -1,12 +1,16 @@
 
-// @include "./base-1.kiwi"
+/// @include "./base-1.kiwi"
 // invalid include
+// @include "../enum.kiwi"
 
-message Vec {
-  float x = 1;
-  float y = 2;
+message Viewport {
+  Rect WindowPadding = 1;
+  bool hidden = 2;
+  Vector size = 3;
 }
 
-message Sum {
-  int point_one = 1;
+message Line {
+  Point start = 1;
+  Point end = 2;
+  uint64 color = 3;
 }

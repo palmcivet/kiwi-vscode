@@ -7,22 +7,16 @@
 message ChangeSet {
   Axis axis = 1;
   Access access = 2;
-  NodePhase nodePhase = 3;
-  WindingRule winding_rule = 4;
+  Vector _offset = 3;
+  Unit number_unit = 4;
+  Viewport viewport = 5;
 
-  TextDecorationStyle textDecorationStyle = 5;
-  LeadingTrim leadingTrim = 6;
-  NumberUnits numberUnits = 7;
-  Viewport viewport = 8;
-
-  Vector offset = 9;
 }
 
 // comment line
 message Drag {
   uint id = 1;
   Rect Area = 2;
-  Vec wordVec = 3;   // comment
-  NumberUnits press_strength = 4;
-  Vect point = 5;
+  Point pt = 3;   // comment
+  Vect point = 4;
 }

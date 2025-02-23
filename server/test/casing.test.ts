@@ -1,4 +1,4 @@
-import * as assert from 'node:assert';
+import { strict as assert } from 'node:assert';
 import { isCamelCase, isPascalCase, isScreamingSnakeCase } from '@server/helper';
 
 describe('casing utilities', () => {

@@ -1,0 +1,31 @@
+==================
+Basic test
+==================
+
+package test;
+
+message User {
+  string name = 1;
+  int32 age = 2;
+}
+
+---
+
+(source_file
+  (package_declaration
+    (space)
+    (identifier))
+  (message_definition
+    (space)
+    (identifier)
+    (message_body
+      (message_field
+        message_field_type: (type_name)
+        (space)
+        message_field_name: (identifier)
+        message_field_value: (number))
+      (message_field
+        message_field_type: (type_name)
+        (space)
+        message_field_name: (identifier)
+        message_field_value: (number)))))

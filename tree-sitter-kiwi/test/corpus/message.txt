@@ -1,0 +1,32 @@
+==================
+Message test
+==================
+
+// sdsd
+message Shape // sddsd
+{ // sddsd
+// sddsd
+  uint type = 1; // sddsd
+// sddsd  string name = 2;
+} // sddsd
+
+---
+
+(source_file
+  (comment)
+  (message_definition
+    (space)
+    (identifier)
+    (comment)
+    (message_body
+      (comment)
+      (comment)
+      (message_field
+        message_field_type: (type_name
+          (identifier))
+        (space)
+        message_field_name: (identifier)
+        message_field_value: (number))
+      (comment)
+      (comment)))
+  (comment))

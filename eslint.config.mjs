@@ -7,7 +7,8 @@ export default antfu({
     'client/out/**',
     'server/node_modules/**',
     'server/out/**',
-    '**/*.toml',
+    'tree-sitter-kiwi/bindings',
+    'tree-sitter-kiwi/*.toml',
   ],
   stylistic: {
     semi: true,

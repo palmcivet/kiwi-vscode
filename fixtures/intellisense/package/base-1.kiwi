@@ -1,4 +1,3 @@
-
 /// @include "../enum.kiwi"
 
 message Vector {
@@ -7,6 +6,16 @@ message Vector {
 }
 
 
+message Point {
+  float x = 1;
+  float y = 2;
+}
+
+message Fractional {
+  int point_one = 1;
+  int PointTwo = 2;
+}
+
 message Rect {
   float x = 1;
   float y = 2;
@@ -14,9 +23,3 @@ message Rect {
   float h = 4;
 }
 
-message Viewport {
-  Rect canvasSpaceBounds = 1;
-  bool pixelPreview = 2;
-  float pixelDensity = 3;
-  Vector size = 4;
-}

@@ -4,34 +4,19 @@ enum Axis {
   Y = 1;
 }
 
+
 enum Access {
   READ_ONLY = 0;
-  READ_WRITE = 1;
+  read_write = 1; // warning
 }
 
-enum NodePhase {
+enum State {
   CREATED = 0;
   REMOVED = 1;
 }
 
-enum WindingRule {
-  NONZERO = 0;
-  ODD = 1;
-}
-
-enum TextDecorationStyle {
-  SOLID = 0;
-  DOTTED = 1;
-  WAVY = 2;
-}
-
-enum LeadingTrim {
-  NONE = 0;
-  CAP_HEIGHT = 1;
-}
-
-enum NumberUnits {
-  RAW = 0;
-  PIXELS = 1;
-  PERCENT = 2;
+enum Unit {
+  raw = 0;
+  pixels = 1;
+  percent = 2;
 }

@@ -16,7 +16,7 @@ Forked from [connorskees/kiwi-lsp](https://github.com/connorskees/kiwi-lsp), whi
   - [Table of Contents](#table-of-contents)
   - [Basic Features](#basic-features)
   - [`@include` Syntax](#include-syntax)
-    - [Background](#background)
+    - [Motivation](#motivation)
     - [Syntax Specification](#syntax-specification)
     - [Plugin Adaptation](#plugin-adaptation)
     - [Test Data](#test-data)
@@ -44,7 +44,7 @@ The original plugin provides the following features:
   - Generate next available ID for messages (especially useful for large messages with hundreds of fields)
 
 ## `@include` Syntax
-### Background
+### Motivation
 
 The original plugin's code analysis functionality was limited to the currently open file. When cross-file references existed (e.g., `derived.kiwi` referencing types from `enum.kiwi`, `base-1.kiwi`, and `base-2.kiwi`), the existing functionality couldn't properly support this usage, resulting in code checking errors.
 

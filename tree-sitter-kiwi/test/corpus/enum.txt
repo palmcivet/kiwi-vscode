@@ -1,0 +1,37 @@
+==================
+Enum test
+==================
+
+enum Axis {
+  X = 0;
+    Y = 1;
+}
+
+enum Method {
+  READ = 0;
+  WRITE  = 1 ;
+}
+
+---
+
+(source_file
+  (enum_definition
+    (space)
+    (identifier)
+    (enum_body
+      (enum_field
+        (identifier)
+        (number))
+      (enum_field
+        (identifier)
+        (number))))
+  (enum_definition
+    (space)
+    (identifier)
+    (enum_body
+      (enum_field
+        (identifier)
+        (number))
+      (enum_field
+        (identifier)
+        (number)))))

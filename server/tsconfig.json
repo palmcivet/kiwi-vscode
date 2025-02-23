@@ -12,7 +12,8 @@
     },
     "strict": true,
     "outDir": "./out",
-    "sourceMap": true
+    "sourceMap": true,
+    "esModuleInterop": true
   },
   "include": [
     "src",
