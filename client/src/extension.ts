@@ -18,13 +18,15 @@ export function activate(context: ExtensionContext) {
     },
   };
 
+  const configuration = workspace.getConfiguration(PluginKey);
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: 'file', language: 'kiwi' }],
     synchronize: {
       fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
     },
     initializationOptions: {
-      enableWarningDiagnostics: workspace.getConfiguration(PluginKey).get('enableWarningDiagnostics'),
+      enableWarningDiagnostics: configuration.get('enableWarningDiagnostics'),
+      enableFormatting: configuration.get('enableFormatting'),
     },
   };
 
@@ -44,6 +46,7 @@ export function activate(context: ExtensionContext) {
       client.sendNotification('workspace/didChangeConfiguration', {
         settings: {
           enableWarningDiagnostics: workspace.getConfiguration(PluginKey).get('enableWarningDiagnostics'),
+          enableFormatting: workspace.getConfiguration(PluginKey).get('enableFormatting'),
         },
       });
     }),

@@ -31,6 +31,11 @@
           "type": "boolean",
           "default": true,
           "description": "Enable warning diagnostics."
+        },
+        "kiwi-vscode.enableFormatting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code formatting."
         }
       }
     },

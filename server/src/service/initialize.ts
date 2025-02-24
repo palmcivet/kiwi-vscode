@@ -12,6 +12,7 @@ export function setupOnInitialize(connection: ServerConnection): void {
       && capabilities.textDocument.publishDiagnostics.relatedInformation));
 
     configStore.setEnableWarningDiagnostics(!!(initializationOptions?.enableWarningDiagnostics));
+    configStore.setEnableFormatting(!!(initializationOptions?.enableFormatting));
 
     const result: InitializeResult = {
       capabilities: {
@@ -25,19 +26,18 @@ export function setupOnInitialize(connection: ServerConnection): void {
         definitionProvider: true,
         referencesProvider: true,
         documentSymbolProvider: true,
+        documentFormattingProvider: configStore.isFormattingEnabled(),
         codeActionProvider: {
           codeActionKinds: [CodeActionKind.QuickFix],
           resolveProvider: true,
         },
+        workspace: {
+          workspaceFolders: {
+            supported: configStore.hasWorkspaceFolders(),
+          },
+        },
       },
     };
-    if (configStore.hasWorkspaceFolders()) {
-      result.capabilities.workspace = {
-        workspaceFolders: {
-          supported: true,
-        },
-      };
-    }
     return result;
   });
 

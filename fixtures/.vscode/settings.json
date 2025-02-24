@@ -1,5 +1,8 @@
 {
   "files.associations": {
     "*.kiwi": "kiwi"
+  },
+  "[kiwi]": {
+    "editor.defaultFormatter": "palmcivet.kiwi-vscode"
   }
 }

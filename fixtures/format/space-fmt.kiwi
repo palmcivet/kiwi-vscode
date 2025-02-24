@@ -6,23 +6,18 @@ message Vector {
 }
 
 message Rect {
-  float x = 1;  //  comment
+  float x = 1; //  comment
   float y = 2;
-    float w = 3;/// comment
+  float w = 3; /// comment
   float h = 4;
- }
+}
 
-
-
-//  comment line
+// comment line
 message Drag {
-    uint id = 1;
+  uint id = 1;
   Vector point = 2;
-
-     Rect Area = 3;
-
+  Rect Area = 3;
   Vector wordVec = 4;
-
 }
 
 // extra spaces

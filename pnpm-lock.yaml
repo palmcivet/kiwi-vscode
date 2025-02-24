@@ -78,13 +78,13 @@ importers:
       node-gyp-build:
         specifier: ^4.8.4
         version: 4.8.4
-    devDependencies:
       tree-sitter:
         specifier: ^0.22.4
         version: 0.22.4
+    devDependencies:
       tree-sitter-cli:
-        specifier: ^0.25.1
-        version: 0.25.2
+        specifier: ^0.24.4
+        version: 0.24.7
 
 packages:
 
@@ -2603,8 +2603,8 @@ packages:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
 
-  tree-sitter-cli@0.25.2:
-    resolution: {integrity: sha512-bjzYIsoy/3+r/7cYvJ+l1G/FrCe6IrxvlF/NUb6TkWAsKrCnh1KKvpmKGtRl/yY82axBf+OLI3omiVwlOhOsTw==}
+  tree-sitter-cli@0.24.7:
+    resolution: {integrity: sha512-o4gnE82pVmMMhJbWwD6+I9yr4lXii5Ci5qEQ2pFpUbVy1YiD8cizTJaqdcznA0qEbo7l2OneI1GocChPrI4YGQ==}
     engines: {node: '>=12.0.0'}
     hasBin: true
 
@@ -5711,7 +5711,7 @@ snapshots:
 
   tree-kill@1.2.2: {}
 
-  tree-sitter-cli@0.25.2: {}
+  tree-sitter-cli@0.24.7: {}
 
   tree-sitter@0.22.4:
     dependencies:

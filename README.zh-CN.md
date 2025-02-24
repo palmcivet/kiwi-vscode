@@ -135,7 +135,7 @@ kiwi-vscode-1.0.3.vsix (11 files, 131.39 KB)
 
 Logo 由 [Slea.ai](https://slea.ai/) 生成，使用的提示词如下：
 
-> a vector logo design, with the text "Kiwi", main symbol: Messages, binary, code, programming language, the background is circular, Minimalistic, be used in Internet industry, clear background.
+> a vector logo design, with the text "Kiwi", main symbol: messages, binary, code, programming language, the background is circular, Minimalistic, be used in Internet industry, clear background.
 
 ## 致谢
 

@@ -10,5 +10,4 @@ module.exports
 try {
   module.exports.nodeTypeInfo = require('../../src/node-types.json');
 }
-// eslint-disable-next-line unused-imports/no-unused-vars
-catch (error) {}
+catch (_) {}
