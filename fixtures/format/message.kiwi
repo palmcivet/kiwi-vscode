@@ -1,0 +1,5 @@
+message User {
+  id: int32; // user id
+  name: string;  // user name
+  email: string;   // email address
+}

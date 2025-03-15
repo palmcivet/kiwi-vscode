@@ -3,13 +3,13 @@
 fixtures/**
 tree-sitter-kiwi/**
 assets/**
+ai/**
 !assets/icon.png
 **/*.ts
 **/*.map
 **/*.vsix
 **/tsconfig.json
 **/node_modules/**
-.cursorrules
 .gitignore
 eslint.config.mjs
 pnpm-*.yaml
