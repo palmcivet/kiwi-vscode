@@ -1,5 +1,5 @@
 message User {
-  id: int32; // user id
-  name: string; // user name
-  email: string; // email address
+  int id = 1; // user id
+  string name = 2; // user name
+  string email = 3; // email address
 }

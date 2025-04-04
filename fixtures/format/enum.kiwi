@@ -1,5 +1,6 @@
-// comment
-enum State {
-  CREATED = 0;
-  REMOVED = 1;
+//  comment
+enum State
+ {
+  CREATED =  0;
+   REMOVED = 1 ;
 }
