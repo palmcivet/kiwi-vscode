@@ -1,0 +1,37 @@
+// 空格和空行
+package    Example   ;
+
+/// @include     "base.kiwi"
+/// @include   'types.kiwi'
+
+
+
+message Empty{}
+
+message    Spaced    {
+  int    id   =    1;
+  string     name    =2;   // trailing comment
+}
+
+// 注释对齐
+enum Status {
+  ACTIVE = 1;   // active status
+  DELETED = 2;     // deleted status
+  ARCHIVED = 3;// archived status
+}
+
+// 多行注释
+// Line 1
+// Line 2
+//Line 3
+message MultiComment {
+  int id = 1;     // field id
+                    // continuation of comment
+  string name = 2;
+}
+
+message Deprecated {
+  int oldField = 1   [deprecated];
+  int explainField = 2[deprecated];
+  int newField = 3;  // current field
+}

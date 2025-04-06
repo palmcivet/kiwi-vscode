@@ -1,0 +1,71 @@
+// Package declaration
+package ExamplePackage;
+
+// Native types
+message NativeTypes {
+  bool flag = 1;
+  byte data = 2;
+  float score = 3;
+  int count = 4;
+  int64 bigNumber = 5;
+  string name = 6;
+  uint index = 7;
+  uint64 timestamp = 8;
+}
+
+// Array types
+message Arrays {
+  int[] numbers = 1;
+  string[] names = 2;
+
+
+  User[] users = 3;
+}
+
+// Custom type reference
+message User {
+  int id = 1;
+  string name = 2;
+  Role role = 3; // enum reference
+  Profile profile = 4; // struct reference
+  Settings settings = 5; // message reference
+}
+
+// Enum definition
+enum Role {
+  GUEST = 0;
+  USER = 1;
+  ADMIN = 2;
+}
+
+// Struct definition (no field IDs)
+struct Profile {
+  string firstName;
+  string lastName;
+  string email;
+}
+
+// Message with deprecated fields
+message Settings {
+  string theme = 1;
+  int fontSize = 2 [deprecated];
+  string layout = 3;
+  bool  darkMode = 4  [deprecated];
+}
+
+// Nested message
+message Outer {
+  int inner = 1;
+  int outer = 2;
+}
+
+// Complex message
+message Document {
+  int id = 1;
+  string title = 2;
+  User author = 3;
+  string[]  tags =  4;
+  Settings preferences = 5;
+  Role accessLevel = 6;
+  Profile metadata = 7;
+}

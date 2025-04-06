@@ -1,0 +1,34 @@
+// Array types and references
+enum Status {
+  PENDING = 0;
+  RUNNING = 1;
+  FINISHED = 2;
+}
+
+struct Point {
+  float x;
+  float y;
+}
+
+message Task {
+  // Basic array types
+  int[] numbers = 1;
+  string[] tags = 2;
+
+  // References
+  Status status = 3;
+  Point position = 4;
+  Point[] path = 5; // Array of custom type
+
+  // Deprecated field
+  string oldField = 6 [deprecated];
+}
+
+// 数组和自定义类型
+message Types {
+  int[] numbers = 1; // array of numbers
+  string[] names = 2; // array of strings
+
+  Status state = 3; // enum type
+  int simple = 4; // simple type
+}

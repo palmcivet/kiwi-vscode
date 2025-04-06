@@ -1,8 +1,21 @@
-//    @include 'xxx'
+// File header comment
+// Multiple line header
+//Indentation incorrect
+//    Extra spaces
+
+/// @include "types.kiwi"  // Inline comment after include
+///@include 'common.kiwi'// No space after directive
+/// @include basic.kiwi //Extra spaces before comment
 
 package name; //package
 
-//ssdsd
+message Logger {//Comment without space
+  int level = 1;  // Normal comment
+  string name = 2;// Comment without space
+  bool enabled = 3;    // Extra spaces before comment
 
-
-//// other
+  // Field group 1
+  int param1 = 4;    // Long comment that might need
+                       // to span multiple lines
+  int param2 = 5;    // Another comment
+}
