@@ -6,26 +6,25 @@ package test;
 
 message User {
   string name = 1;
-  int32 age = 2;
+  int32 age = 2[deprecated];
 }
 
 ---
 
 (source_file
   (package_declaration
-    (space)
     (identifier))
-  (message_definition
-    (space)
+  (message_declaration
     (identifier)
     (message_body
       (message_field
-        message_field_type: (type_name)
-        (space)
+        message_field_type: (type_name
+          (identifier))
         message_field_name: (identifier)
         message_field_value: (number))
       (message_field
-        message_field_type: (type_name)
-        (space)
+        message_field_type: (type_name
+          (identifier))
         message_field_name: (identifier)
-        message_field_value: (number)))))
+        message_field_value: (number)
+        (deprecated_tag)))))

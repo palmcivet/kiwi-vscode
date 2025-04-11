@@ -3,11 +3,10 @@
 // Indentation incorrect
 // Extra spaces
 
+package name; // package
 /// @include "types.kiwi" // Inline comment after include
 /// @include 'common.kiwi' // No space after directive
 /// @include basic.kiwi // Extra spaces before comment
-
-package name; // package
 
 message Logger { // Comment without space
   int level = 1; // Normal comment

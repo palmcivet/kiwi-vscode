@@ -8,25 +8,20 @@ module.exports = grammar({
 
   word: $ => $.identifier,
 
-  // 注释保持在前
+  extras: $ => [
+    /\s/,
+    $.comment,
+  ],
+
   rules: {
     source_file: $ => seq(
-      optional(seq(
-        repeat($.comment),
-        $.package_declaration,
+      optional($.package_declaration),
+      repeat($.include_directive),
+      repeat(choice(
+        $.enum_declaration,
+        $.message_declaration,
+        $.struct_declaration,
       )),
-      repeat(seq(
-        repeat($.comment),
-        $.include_directive,
-      )),
-      repeat(seq(
-        repeat($.comment),
-        choice(
-          $.enum_definition,
-          $.message_definition,
-        ),
-      )),
-      repeat($.comment),
     ),
 
     include_directive: $ => seq(
@@ -34,30 +29,25 @@ module.exports = grammar({
       $.path,
     ),
 
-    path: $ => choice(
-      seq('"', $.dir, '"'),
-      seq('\'', $.dir, '\''),
-      /\S+/,
+    comment: $ => choice(
+      seq('//', /.*/),
     ),
-
-    comment: $ => seq('//', /.*/),
 
     package_declaration: $ => seq(
       'package',
-      $.space,
+      $._space,
       $.identifier,
       ';',
     ),
 
-    enum_definition: $ => seq(
+    enum_declaration: $ => seq(
       'enum',
-      $.space,
+      $._space,
       $.identifier,
-      repeat($.comment),
       $.enum_body,
     ),
 
-    enum_body: $ => seq('{', repeat(choice($.enum_field, $.comment)), '}'),
+    enum_body: $ => seq('{', repeat($.enum_field), '}'),
 
     enum_field: $ => seq(
       field('enum_field_name', $.identifier),
@@ -66,19 +56,18 @@ module.exports = grammar({
       ';',
     ),
 
-    message_definition: $ => seq(
+    message_declaration: $ => seq(
       'message',
-      $.space,
+      $._space,
       $.identifier,
-      repeat($.comment),
       $.message_body,
     ),
 
-    message_body: $ => seq('{', repeat(choice($.message_field, $.comment)), '}'),
+    message_body: $ => seq('{', repeat($.message_field), '}'),
 
     message_field: $ => seq(
       field('message_field_type', seq($.type_name, optional('[]'))),
-      $.space,
+      $._space,
       field('message_field_name', $.identifier),
       '=',
       field('message_field_value', $.number),
@@ -86,7 +75,39 @@ module.exports = grammar({
       ';',
     ),
 
+    struct_declaration: $ => seq(
+      'struct',
+      $._space,
+      $.identifier,
+      $.struct_body,
+    ),
+
+    struct_body: $ => seq('{', repeat($.struct_field), '}'),
+
+    struct_field: $ => seq(
+      field('struct_field_type', seq($.type_name, optional('[]'))),
+      $._space,
+      field('struct_field_name', $.identifier),
+      ';',
+    ),
+
     type_name: $ => choice(
+      $._primitive_type,
+      $.identifier,
+    ),
+
+    deprecated_tag: $ => '[deprecated]',
+    identifier: $ => token(/[A-Z_]\w*/i),
+    number: $ => token(/\d+/),
+    path: $ => choice(
+      seq('"', $._dir, '"'),
+      seq('\'', $._dir, '\''),
+      /\S+/,
+    ),
+
+    _space: $ => repeat1(/\s/),
+    _dir: $ => token(/[\w\-/.]+/),
+    _primitive_type: $ => token(choice(
       'bool',
       'byte',
       'int32',
@@ -96,17 +117,6 @@ module.exports = grammar({
       'float',
       'double',
       'string',
-      $.identifier,
-    ),
-
-    deprecated_tag: $ => choice(
-      '[deprecated]',
-      seq('[deprecated(', /[^)]+/, ')]'),
-    ),
-
-    identifier: $ => /[A-Z_]\w*/i,
-    number: $ => /\d+/,
-    dir: $ => /[\w\-/.]+/,
-    space: $ => repeat1(/\s/),
+    )),
   },
 });

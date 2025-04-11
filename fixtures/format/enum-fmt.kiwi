@@ -1,5 +1,8 @@
 // comment
 enum State {
   CREATED = 0;
-  REMOVED = 1;
+  REMOVED = 1; // remove
+  UPDATED = 2;
+  // inner comment
+  LIST = 3;
 }

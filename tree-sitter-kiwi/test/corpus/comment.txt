@@ -22,8 +22,7 @@ enum Axis//sdsd
   (include_directive
     (path))
   (comment)
-  (enum_definition
-    (space)
+  (enum_declaration
     (identifier)
     (comment)
     (enum_body

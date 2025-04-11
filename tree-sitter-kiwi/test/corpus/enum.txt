@@ -15,8 +15,7 @@ enum Method {
 ---
 
 (source_file
-  (enum_definition
-    (space)
+  (enum_declaration
     (identifier)
     (enum_body
       (enum_field
@@ -25,8 +24,7 @@ enum Method {
       (enum_field
         (identifier)
         (number))))
-  (enum_definition
-    (space)
+  (enum_declaration
     (identifier)
     (enum_body
       (enum_field

@@ -10,12 +10,16 @@ message Shape // sddsd
 // sddsd  string name = 2;
 } // sddsd
 
+struct Point {
+float x;
+  float  y; // comment
+}
+
 ---
 
 (source_file
   (comment)
-  (message_definition
-    (space)
+  (message_declaration
     (identifier)
     (comment)
     (message_body
@@ -24,9 +28,20 @@ message Shape // sddsd
       (message_field
         message_field_type: (type_name
           (identifier))
-        (space)
         message_field_name: (identifier)
         message_field_value: (number))
       (comment)
       (comment)))
-  (comment))
+  (comment)
+  (struct_declaration
+    (identifier)
+    (struct_body
+      (struct_field
+        struct_field_type: (type_name
+          (identifier))
+        struct_field_name: (identifier))
+      (struct_field
+        struct_field_type: (type_name
+          (identifier))
+        struct_field_name: (identifier))
+      (comment))))
