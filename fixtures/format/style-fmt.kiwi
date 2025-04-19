@@ -4,7 +4,8 @@ package Example;
 /// @include "base.kiwi"
 /// @include 'types.kiwi'
 
-message Empty {}
+message Empty {
+}
 
 message Spaced {
   int id = 1;

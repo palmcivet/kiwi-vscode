@@ -8,6 +8,7 @@ message Shape // sddsd
 // sddsd
   uint type = 1; // sddsd
 // sddsd  string name = 2;
+  uint[] str = 3 [deprecated]; // sddsd
 } // sddsd
 
 struct Point {
@@ -26,22 +27,40 @@ float x;
       (comment)
       (comment)
       (message_field
-        message_field_type: (type_name
+        (message_field_type
+          (type_name
+            (identifier)))
+        (message_field_name
           (identifier))
-        message_field_name: (identifier)
-        message_field_value: (number))
+        (message_field_value
+          (number)))
       (comment)
+      (comment)
+      (message_field
+        (message_field_type
+          (type_name
+            (identifier)
+            (array)))
+        (message_field_name
+          (identifier))
+        (message_field_value
+          (number)
+          (deprecated_tag)))
       (comment)))
   (comment)
   (struct_declaration
     (identifier)
     (struct_body
       (struct_field
-        struct_field_type: (type_name
-          (identifier))
-        struct_field_name: (identifier))
+        (struct_field_type
+          (type_name
+            (identifier)))
+        (struct_field_name
+          (identifier)))
       (struct_field
-        struct_field_type: (type_name
-          (identifier))
-        struct_field_name: (identifier))
+        (struct_field_type
+          (type_name
+            (identifier)))
+        (struct_field_name
+          (identifier)))
       (comment))))

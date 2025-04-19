@@ -6,7 +6,12 @@ package    Example   ;
 
 
 
-message Empty{}
+message Empty{
+
+
+
+
+}
 
 message    Spaced    {
   int    id   =    1;

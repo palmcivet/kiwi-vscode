@@ -6,3 +6,4 @@ enum State {
   // inner comment
   LIST = 3;
 }
+

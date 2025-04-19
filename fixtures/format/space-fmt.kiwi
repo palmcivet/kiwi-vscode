@@ -8,7 +8,7 @@ message Vector {
 message Rect {
   float x = 1; // comment
   float y = 2;
-  float w = 3; /// comment
+  float w = 3; // / comment
   float h = 4;
 }
 

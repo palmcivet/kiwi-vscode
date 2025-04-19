@@ -1,2 +1,3 @@
-export * from './kiwi-formatter';
-export * from './options';
+export async function format(text: string): Promise<string> {
+  return text;
+}

@@ -1,17 +1,15 @@
 import type { FileStore } from '@server/store';
 import type { ServerConnection } from './type';
-import { KiwiFormatter } from '@server/formatter';
 import { TextEdit } from 'vscode-languageserver/node';
 
 export function setupOnFormatting(connection: ServerConnection, fileStore: FileStore): void {
-  connection.onDocumentFormatting(({ textDocument }) => {
+  connection.onDocumentFormatting(async ({ textDocument }) => {
     const document = fileStore.getTextDocument(textDocument.uri);
     if (!document) {
       return null;
     }
 
-    const formatter = new KiwiFormatter();
-    const formattedText = formatter.format(document.getText());
+    const formattedText = document.getText();
 
     return [
       TextEdit.replace(

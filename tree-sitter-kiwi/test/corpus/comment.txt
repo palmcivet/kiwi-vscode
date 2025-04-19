@@ -28,8 +28,10 @@ enum Axis//sdsd
     (enum_body
       (comment)
       (enum_field
-        enum_field_name: (identifier)
-        enum_field_value: (number))
+        (enum_field_name
+          (identifier))
+        (enum_field_value
+          (number)))
       (comment)
       (comment)
       (comment))))

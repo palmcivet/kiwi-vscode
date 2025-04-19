@@ -35,14 +35,12 @@ module.exports = grammar({
 
     package_declaration: $ => seq(
       'package',
-      $._space,
       $.identifier,
       ';',
     ),
 
     enum_declaration: $ => seq(
       'enum',
-      $._space,
       $.identifier,
       $.enum_body,
     ),
@@ -50,15 +48,16 @@ module.exports = grammar({
     enum_body: $ => seq('{', repeat($.enum_field), '}'),
 
     enum_field: $ => seq(
-      field('enum_field_name', $.identifier),
+      $.enum_field_name,
       '=',
-      field('enum_field_value', $.number),
+      $.enum_field_value,
       ';',
     ),
+    enum_field_name: $ => $.identifier,
+    enum_field_value: $ => $.number,
 
     message_declaration: $ => seq(
       'message',
-      $._space,
       $.identifier,
       $.message_body,
     ),
@@ -66,18 +65,18 @@ module.exports = grammar({
     message_body: $ => seq('{', repeat($.message_field), '}'),
 
     message_field: $ => seq(
-      field('message_field_type', seq($.type_name, optional('[]'))),
-      $._space,
-      field('message_field_name', $.identifier),
+      $.message_field_type,
+      $.message_field_name,
       '=',
-      field('message_field_value', $.number),
-      optional($.deprecated_tag),
+      $.message_field_value,
       ';',
     ),
+    message_field_type: $ => $.type_name,
+    message_field_name: $ => $.identifier,
+    message_field_value: $ => seq($.number, optional($.deprecated_tag)),
 
     struct_declaration: $ => seq(
       'struct',
-      $._space,
       $.identifier,
       $.struct_body,
     ),
@@ -85,19 +84,20 @@ module.exports = grammar({
     struct_body: $ => seq('{', repeat($.struct_field), '}'),
 
     struct_field: $ => seq(
-      field('struct_field_type', seq($.type_name, optional('[]'))),
-      $._space,
-      field('struct_field_name', $.identifier),
+      $.struct_field_type,
+      $.struct_field_name,
       ';',
     ),
+    struct_field_type: $ => $.type_name,
+    struct_field_name: $ => $.identifier,
 
-    type_name: $ => choice(
-      $._primitive_type,
-      $.identifier,
+    type_name: $ => seq(
+      choice($._primitive_type, $.identifier),
+      optional($.array),
     ),
-
-    deprecated_tag: $ => '[deprecated]',
+    deprecated_tag: $ => token('[deprecated]'),
     identifier: $ => token(/[A-Z_]\w*/i),
+    array: $ => token('[]'),
     number: $ => token(/\d+/),
     path: $ => choice(
       seq('"', $._dir, '"'),

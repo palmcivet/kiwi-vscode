@@ -19,17 +19,25 @@ enum Method {
     (identifier)
     (enum_body
       (enum_field
-        (identifier)
-        (number))
+        (enum_field_name
+          (identifier))
+        (enum_field_value
+          (number)))
       (enum_field
-        (identifier)
-        (number))))
+        (enum_field_name
+          (identifier))
+        (enum_field_value
+          (number)))))
   (enum_declaration
     (identifier)
     (enum_body
       (enum_field
-        (identifier)
-        (number))
+        (enum_field_name
+          (identifier))
+        (enum_field_value
+          (number)))
       (enum_field
-        (identifier)
-        (number)))))
+        (enum_field_name
+          (identifier))
+        (enum_field_value
+          (number))))))

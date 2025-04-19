@@ -18,13 +18,19 @@ message User {
     (identifier)
     (message_body
       (message_field
-        message_field_type: (type_name
+        (message_field_type
+          (type_name
+            (identifier)))
+        (message_field_name
           (identifier))
-        message_field_name: (identifier)
-        message_field_value: (number))
+        (message_field_value
+          (number)))
       (message_field
-        message_field_type: (type_name
+        (message_field_type
+          (type_name
+            (identifier)))
+        (message_field_name
           (identifier))
-        message_field_name: (identifier)
-        message_field_value: (number)
-        (deprecated_tag)))))
+        (message_field_value
+          (number)
+          (deprecated_tag))))))

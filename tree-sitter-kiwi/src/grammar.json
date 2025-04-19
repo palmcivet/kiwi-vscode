@@ -87,10 +87,6 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_space"
-        },
-        {
-          "type": "SYMBOL",
           "name": "identifier"
         },
         {
@@ -105,10 +101,6 @@
         {
           "type": "STRING",
           "value": "enum"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_space"
         },
         {
           "type": "SYMBOL",
@@ -144,24 +136,16 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "FIELD",
-          "name": "enum_field_name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
-          }
+          "type": "SYMBOL",
+          "name": "enum_field_name"
         },
         {
           "type": "STRING",
           "value": "="
         },
         {
-          "type": "FIELD",
-          "name": "enum_field_value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "number"
-          }
+          "type": "SYMBOL",
+          "name": "enum_field_value"
         },
         {
           "type": "STRING",
@@ -169,16 +153,20 @@
         }
       ]
     },
+    "enum_field_name": {
+      "type": "SYMBOL",
+      "name": "identifier"
+    },
+    "enum_field_value": {
+      "type": "SYMBOL",
+      "name": "number"
+    },
     "message_declaration": {
       "type": "SEQ",
       "members": [
         {
           "type": "STRING",
           "value": "message"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_space"
         },
         {
           "type": "SYMBOL",
@@ -214,53 +202,41 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "FIELD",
-          "name": "message_field_type",
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "type_name"
-              },
-              {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": "[]"
-                  },
-                  {
-                    "type": "BLANK"
-                  }
-                ]
-              }
-            ]
-          }
+          "type": "SYMBOL",
+          "name": "message_field_type"
         },
         {
           "type": "SYMBOL",
-          "name": "_space"
-        },
-        {
-          "type": "FIELD",
-          "name": "message_field_name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
-          }
+          "name": "message_field_name"
         },
         {
           "type": "STRING",
           "value": "="
         },
         {
-          "type": "FIELD",
-          "name": "message_field_value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "number"
-          }
+          "type": "SYMBOL",
+          "name": "message_field_value"
+        },
+        {
+          "type": "STRING",
+          "value": ";"
+        }
+      ]
+    },
+    "message_field_type": {
+      "type": "SYMBOL",
+      "name": "type_name"
+    },
+    "message_field_name": {
+      "type": "SYMBOL",
+      "name": "identifier"
+    },
+    "message_field_value": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "number"
         },
         {
           "type": "CHOICE",
@@ -273,10 +249,6 @@
               "type": "BLANK"
             }
           ]
-        },
-        {
-          "type": "STRING",
-          "value": ";"
         }
       ]
     },
@@ -286,10 +258,6 @@
         {
           "type": "STRING",
           "value": "struct"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_space"
         },
         {
           "type": "SYMBOL",
@@ -325,41 +293,12 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "FIELD",
-          "name": "struct_field_type",
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "type_name"
-              },
-              {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": "[]"
-                  },
-                  {
-                    "type": "BLANK"
-                  }
-                ]
-              }
-            ]
-          }
+          "type": "SYMBOL",
+          "name": "struct_field_type"
         },
         {
           "type": "SYMBOL",
-          "name": "_space"
-        },
-        {
-          "type": "FIELD",
-          "name": "struct_field_name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
-          }
+          "name": "struct_field_name"
         },
         {
           "type": "STRING",
@@ -367,22 +306,50 @@
         }
       ]
     },
+    "struct_field_type": {
+      "type": "SYMBOL",
+      "name": "type_name"
+    },
+    "struct_field_name": {
+      "type": "SYMBOL",
+      "name": "identifier"
+    },
     "type_name": {
-      "type": "CHOICE",
+      "type": "SEQ",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "_primitive_type"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_primitive_type"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "identifier"
+            }
+          ]
         },
         {
-          "type": "SYMBOL",
-          "name": "identifier"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "array"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         }
       ]
     },
     "deprecated_tag": {
-      "type": "STRING",
-      "value": "[deprecated]"
+      "type": "TOKEN",
+      "content": {
+        "type": "STRING",
+        "value": "[deprecated]"
+      }
     },
     "identifier": {
       "type": "TOKEN",
@@ -390,6 +357,13 @@
         "type": "PATTERN",
         "value": "[A-Z_]\\w*",
         "flags": "i"
+      }
+    },
+    "array": {
+      "type": "TOKEN",
+      "content": {
+        "type": "STRING",
+        "value": "[]"
       }
     },
     "number": {
