@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "git-mcp-prettier": {
+      "type": "sse",
+      "url": "https://gitmcp.io/prettier/prettier"
+    },
+    "git-mcp-tree-sitter": {
+      "type": "sse",
+      "url": "https://gitmcp.io/tree-sitter/tree-sitter"
+    }
+  }
+}

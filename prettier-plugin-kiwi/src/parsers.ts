@@ -30,7 +30,6 @@ type KiwiSyntaxNodeType =
 export interface KiwiSyntaxNode extends TreeSitter.SyntaxNode {
   type: KiwiSyntaxNodeType;
   children: Array<KiwiSyntaxNode>;
-  childForFieldName: (fieldName: KiwiSyntaxNodeType) => KiwiSyntaxNode | null;
 }
 
 function parse(text: string): KiwiSyntaxNode {

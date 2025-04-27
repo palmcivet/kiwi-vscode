@@ -2,10 +2,9 @@
 package Example;
 
 /// @include "base.kiwi"
-/// @include 'types.kiwi'
+/// @include "types.kiwi"
 
-message Empty {
-}
+message Empty {}
 
 message Spaced {
   int id = 1;
@@ -27,7 +26,7 @@ enum Status {
 message MultiComment {
   int id = 1; // field id
   // continuation of comment
-  string name = 2; // another style
+  string name = 2;
 }
 
 message Deprecated {

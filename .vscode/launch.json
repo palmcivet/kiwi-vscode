@@ -16,26 +16,10 @@
       ],
       "sourceMaps": true,
       "autoAttachChildProcesses": true,
-      "preLaunchTask": "watch"
+      "preLaunchTask": "watch:debug"
     },
     {
-      "name": "Unit Test",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
-      "args": [
-        "${workspaceRoot}/server/out/**/*.test.js"
-      ],
-      "cwd": "${workspaceRoot}",
-      "sourceMaps": true,
-      "internalConsoleOptions": "openOnSessionStart",
-      "outFiles": [
-        "${workspaceRoot}/server/out/**/*.test.js"
-      ],
-      "preLaunchTask": "watch"
-    },
-    {
-      "name": "E2E Test",
+      "name": "Test: Client",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
@@ -44,9 +28,30 @@
         "--extensionTestsPath=${workspaceRoot}/client/out/test/run-test",
         "${workspaceRoot}/fixtures"
       ],
-      "outFiles": [
-        "${workspaceRoot}/client/out/test/**/*.js"
-      ]
+      "outFiles": ["${workspaceRoot}/client/out/test/**/*.cjs"]
+    },
+    {
+      "name": "Test: Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
+      "args": ["${workspaceRoot}/server/out/**/*.test.cjs"],
+      "cwd": "${workspaceRoot}",
+      "sourceMaps": true,
+      "internalConsoleOptions": "openOnSessionStart",
+      "outFiles": ["${workspaceRoot}/server/out/**/*.test.cjs"]
+    },
+    {
+      "name": "Test: Prettier",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/mocha/bin/mocha",
+      "args": ["${workspaceRoot}/prettier-plugin-kiwi/out/**/*.test.cjs"],
+      "cwd": "${workspaceRoot}",
+      "sourceMaps": true,
+      "internalConsoleOptions": "openOnSessionStart",
+      "outFiles": ["${workspaceRoot}/prettier-plugin-kiwi/out/**/*.test.cjs"],
+      "preLaunchTask": "watch:prettier"
     }
   ]
 }

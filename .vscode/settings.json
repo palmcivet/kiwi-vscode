@@ -1,19 +1,11 @@
 {
-  "prettier.enable": false,
+  "prettier.enable": true,
   "files.eol": "\n",
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
-  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "typescript.tsc.autoDetect": "off",
   "typescript.tsdk": "node_modules/typescript/lib",
-  "eslint.format.enable": true,
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
-  "eslint.validate": [
-    "javascript",
-    "typescript",
-    "json",
-    "jsonc",
-    "markdown"
-  ]
 }

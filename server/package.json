@@ -6,15 +6,15 @@
     "node": "*"
   },
   "scripts": {
-    "clean": "rimraf out",
-    "watch": "tsup --watch --sourcemap",
-    "build": "PRODUCTION=true tsup --clean --minify",
-    "test": "tsup && mocha ./out/**/*.test.js"
+    "clean": "rimraf ./out",
+    "dev": "tsup --watch --sourcemap",
+    "build": "tsup --clean --minify",
+    "test": "tsup --config ./test.config.ts && mocha ./out/**/*.test.js",
+    "test:watch": "tsup --config ./test.config.ts --watch && mocha ./out/**/*.test.js --watch"
   },
   "dependencies": {
     "change-case": "^4",
-    "tree-sitter": "^0.22.4",
-    "tree-sitter-kiwi": "workspace:*",
+    "prettier-plugin-kiwi": "workspace:*",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.11"
   }
