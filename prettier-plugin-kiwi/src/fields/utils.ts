@@ -5,20 +5,24 @@ import { doc } from 'prettier';
 
 const { hardline, join } = doc.builders;
 
-export function indentifier(
-  node: KiwiSyntaxNode | null,
-): Doc {
+export function indentifier(node: KiwiSyntaxNode | null): Doc {
   return node ? node.text : '';
 }
 
-export function isInlineComment(comment: KiwiSyntaxNode, previousNode: KiwiSyntaxNode): boolean {
+export function isInlineComment(
+  comment: KiwiSyntaxNode,
+  previousNode: KiwiSyntaxNode,
+): boolean {
   return (
-    comment.type === 'comment'
-    && comment.startPosition.row === previousNode.endPosition.row
+    comment.type === 'comment' &&
+    comment.startPosition.row === previousNode.endPosition.row
   );
 }
 
-export function formatComment(comment: KiwiSyntaxNode, previousNode?: KiwiSyntaxNode): Doc {
+export function formatComment(
+  comment: KiwiSyntaxNode,
+  previousNode?: KiwiSyntaxNode,
+): Doc {
   const text = comment.text.replace(/^\/\/\s*/, '// ');
   if (previousNode && isInlineComment(comment, previousNode)) {
     return [' ', text];
@@ -26,15 +30,32 @@ export function formatComment(comment: KiwiSyntaxNode, previousNode?: KiwiSyntax
   return text;
 }
 
+/**
+ * @description Get the first child with the given type name
+ */
+export function childForTypeName(
+  node: KiwiSyntaxNode,
+  typeName: string,
+): KiwiSyntaxNode | null {
+  const children = node.children || [];
+  for (const child of children) {
+    if (child.type === typeName) {
+      return child;
+    }
+  }
+  return null;
+}
+
 function isEmptyLine(doc: Doc): boolean {
-  if (doc === hardline)
-    return true;
-  if (typeof doc === 'string' && /^\s*$/.test(doc))
-    return true;
+  if (doc === hardline) return true;
+  if (typeof doc === 'string' && /^\s*$/.test(doc)) return true;
   return false;
 }
 
-export function processBlockContent(docs: Doc[], options: PrettierOptions): Doc[] {
+export function processBlockContent(
+  docs: Doc[],
+  options: PrettierOptions,
+): Doc[] {
   if (!options.trimTrailingWhitespace) {
     return docs;
   }
@@ -48,8 +69,7 @@ export function processBlockContent(docs: Doc[], options: PrettierOptions): Doc[
       if (consecutiveEmptyLines <= 1) {
         result.push(doc);
       }
-    }
-    else {
+    } else {
       consecutiveEmptyLines = 0;
       result.push(doc);
     }
@@ -77,8 +97,7 @@ export function processDoc(doc: Doc, options: PrettierOptions): Doc {
         if (consecutiveEmptyLines === 1) {
           result.push(item);
         }
-      }
-      else {
+      } else {
         consecutiveEmptyLines = 0;
         result.push(processDoc(item, options));
       }

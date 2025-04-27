@@ -2,3 +2,10 @@ packages:
   - client
   - server
   - tree-sitter-kiwi
+  - prettier-plugin-kiwi
+
+onlyBuiltDependencies:
+  - tree-sitter
+  - tree-sitter-cli
+  - tree-sitter-kiwi
+  - unrs-resolver

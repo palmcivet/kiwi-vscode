@@ -2,7 +2,13 @@ import type { AstPath, Doc } from 'prettier';
 import type { PrettierOptions } from '../options';
 import type { KiwiSyntaxNode } from '../parsers';
 import { doc } from 'prettier';
-import { formatComment, indentifier, isInlineComment, processBlockContent } from './utils';
+import {
+  childForTypeName,
+  formatComment,
+  indentifier,
+  isInlineComment,
+  processBlockContent,
+} from './utils';
 
 const { group, indent, join, hardline } = doc.builders;
 
@@ -41,15 +47,13 @@ export function messageBody(
     if (child.type === 'message_field') {
       const fieldDoc = childPath.call(printChildren);
       fields.push(fieldDoc);
-    }
-    else if (child.type === 'comment') {
+    } else if (child.type === 'comment') {
       const commentDoc = formatComment(child, previousChild);
       if (previousChild && isInlineComment(child, previousChild)) {
         // 如果是行内注释，将其合并到前一个字段中
         const lastField = fields.pop()!;
         fields.push([lastField, commentDoc]);
-      }
-      else {
+      } else {
         fields.push(commentDoc);
       }
     }
@@ -76,16 +80,26 @@ export function messageField(
     return '';
   }
 
-  const typeNode = node.childForFieldName('message_field_type');
-  const nameNode = node.childForFieldName('message_field_name');
-  const valueNode = node.childForFieldName('message_field_value');
+  const typeNode = childForTypeName(node, 'message_field_type');
+  const nameNode = childForTypeName(node, 'message_field_name');
+  const valueNode = childForTypeName(node, 'message_field_value');
 
-  // TODO use alias type name
   const isArray = node.descendantsOfType('[]').length > 0;
-  const isDeprecated = children.some(child => child.type === 'deprecated_tag');
+  const valueChildren = valueNode?.children || [];
+  const value = indentifier(valueChildren[0] ?? valueNode?.text);
+  const isDeprecated = valueChildren.some(
+    (child) => child.type === 'deprecated_tag',
+  );
 
   const type = indentifier(typeNode) + (isArray ? '[]' : '');
-  const value = indentifier(valueNode) + (isDeprecated ? ' [deprecated]' : '');
+  const deprecatedTag = isDeprecated ? ' [deprecated]' : '';
 
-  return group([type, ' ', indentifier(nameNode), ' = ', value, ';']);
+  return group([
+    type,
+    ' ',
+    indentifier(nameNode),
+    ' = ',
+    `${value}${deprecatedTag}`,
+    ';',
+  ]);
 }

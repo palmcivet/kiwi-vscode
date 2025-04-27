@@ -1,0 +1,22 @@
+{
+  "name": "prettier-plugin-kiwi",
+  "type": "module",
+  "private": false,
+  "description": "A Prettier plugin for Kiwi",
+  "main": "./out/index.cjs",
+  "scripts": {
+    "clean": "rimraf ./out",
+    "dev": "pnpm test:build -- --watch && pnpm test:run -- --watch",
+    "build": "tsup --clean --minify",
+    "test": "pnpm test:build && pnpm test:run",
+    "test:build": "tsup --config ./test.config.ts",
+    "test:run": "mocha ./out/**/*.test.cjs"
+  },
+  "peerDependencies": {
+    "prettier": "^3.5.3"
+  },
+  "dependencies": {
+    "tree-sitter": "^0.22.4",
+    "tree-sitter-kiwi": "workspace:*"
+  }
+}

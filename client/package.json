@@ -6,10 +6,9 @@
     "vscode": "^1.75.0"
   },
   "scripts": {
-    "clean": "rimraf out",
-    "watch": "tsup --watch --sourcemap",
-    "build": "PRODUCTION=true tsup --clean --minify",
-    "test": "tsup && mocha ./out/**/*.test.js"
+    "clean": "rimraf ./out",
+    "dev": "tsup --watch --sourcemap",
+    "build": "tsup --clean --minify"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

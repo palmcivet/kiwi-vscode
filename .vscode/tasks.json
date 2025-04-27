@@ -2,16 +2,19 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "watch",
+      "label": "watch:debug",
       "type": "shell",
       "command": "pnpm",
       "args": [
-        "watch"
+        "-r",
+        "--filter='vscode-lsp-server'",
+        "--filter='vscode-lsp-client'",
+        "dev"
       ],
       "isBackground": true,
       "presentation": {
         "close": true,
-        "reveal": "always"
+        "reveal": "never"
       },
       "problemMatcher": [
         {
@@ -27,6 +30,34 @@
             "activeOnStart": true,
             "beginsPattern": "^.*CLI Building.*$",
             "endsPattern": "^.*CLI Watching for changes.*$"
+          }
+        }
+      ]
+    },
+    {
+      "label": "watch:prettier",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["-r", "--filter='prettier-plugin-kiwi'", "dev"],
+      "isBackground": true,
+      "presentation": {
+        "close": true,
+        "reveal": "never"
+      },
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": "^.*$",
+              "file": 1,
+              "location": 2,
+              "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*CLI Building.*$",
+            "endsPattern": "^.*waiting for changes.*$"
           }
         }
       ]

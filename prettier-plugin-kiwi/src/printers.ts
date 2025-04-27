@@ -37,7 +37,13 @@ function print(
     case 'comment': {
       const parentNode = path.getParentNode() as KiwiSyntaxNode;
       const { previous } = path;
-      const previousNode = previous && ['enum_body', 'message_body', 'struct_body'].includes(parentNode?.type) ? previous : undefined;
+      const previousNode =
+        previous &&
+        ['source_file', 'enum_body', 'message_body', 'struct_body'].includes(
+          parentNode?.type,
+        )
+          ? previous
+          : undefined;
       return formatComment(node, previousNode);
     }
 
@@ -46,7 +52,7 @@ function print(
       if (children.length < 2) {
         return '';
       }
-      return group([children[0].text, children[1].text]);
+      return group(['/// @include ', children[1].text]);
     }
 
     case 'package_declaration': {

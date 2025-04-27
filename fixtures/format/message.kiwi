@@ -10,3 +10,19 @@ struct Point {
   float  y;
 }
 
+message   Types{
+  bool    flag=1;  // boolean
+  byte    data=2;    // binary data
+  int   small=3;// 32-bit integer
+  int64   large=4;     // 64-bit integer
+  int  unsigned=5;// unsigned 32-bit
+  uint64  bigUnsigned=6;   // unsigned 64-bit
+  float   ratio=7;// floating point
+  int  precise=8;  // double precision
+  string  text=9;// string value
+
+  // Array variants
+  bool[]    flags=10;
+  byte[]    chunks=11;
+  string[]  lines=12;
+}

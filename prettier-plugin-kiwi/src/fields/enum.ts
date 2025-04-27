@@ -2,7 +2,13 @@ import type { AstPath, Doc } from 'prettier';
 import type { PrettierOptions } from '../options';
 import type { KiwiSyntaxNode } from '../parsers';
 import { doc } from 'prettier';
-import { formatComment, indentifier, isInlineComment, processBlockContent } from './utils';
+import {
+  childForTypeName,
+  formatComment,
+  indentifier,
+  isInlineComment,
+  processBlockContent,
+} from './utils';
 
 const { group, indent, hardline, join } = doc.builders;
 
@@ -41,14 +47,12 @@ export function enumBody(
     if (child.type === 'enum_field') {
       const fieldDoc = childPath.call(printChildren);
       fields.push(fieldDoc);
-    }
-    else if (child.type === 'comment') {
+    } else if (child.type === 'comment') {
       const commentDoc = formatComment(child, previousChild);
       if (previousChild && isInlineComment(child, previousChild)) {
         const lastField = fields.pop()!;
         fields.push([lastField, commentDoc]);
-      }
-      else {
+      } else {
         fields.push(commentDoc);
       }
     }
@@ -74,8 +78,8 @@ export function enumField(
     return '';
   }
 
-  const nameNode = node.childForFieldName('enum_field_name');
-  const valueNode = node.childForFieldName('enum_field_value');
+  const nameNode = childForTypeName(node, 'enum_field_name');
+  const valueNode = childForTypeName(node, 'enum_field_value');
 
   return group([indentifier(nameNode), ' = ', indentifier(valueNode), ';']);
 }

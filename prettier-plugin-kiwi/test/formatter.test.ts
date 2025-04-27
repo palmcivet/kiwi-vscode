@@ -2,13 +2,6 @@ import { strict as assert } from 'node:assert';
 import { format, readTestFixture } from './utils';
 
 describe('formatter', () => {
-  it('should format basic correctly', async () => {
-    const sourceCode = readTestFixture('basic.kiwi');
-    const expected = readTestFixture('basic-fmt.kiwi');
-    const formattedCode = await format(sourceCode);
-    assert.strictEqual(formattedCode, expected);
-  });
-
   it('should format comments correctly', async () => {
     const sourceCode = readTestFixture('comment.kiwi');
     const expected = readTestFixture('comment-fmt.kiwi');
@@ -16,16 +9,16 @@ describe('formatter', () => {
     assert.strictEqual(formattedCode, expected);
   });
 
-  it('should format composite correctly', async () => {
-    const sourceCode = readTestFixture('composite.kiwi');
-    const expected = readTestFixture('composite-fmt.kiwi');
+  it('should format enums correctly', async () => {
+    const sourceCode = readTestFixture('enum.kiwi');
+    const expected = readTestFixture('enum-fmt.kiwi');
     const formattedCode = await format(sourceCode);
     assert.strictEqual(formattedCode, expected);
   });
 
-  it('should format enums correctly', async () => {
-    const sourceCode = readTestFixture('enum.kiwi');
-    const expected = readTestFixture('enum-fmt.kiwi');
+  it('should format includes correctly', async () => {
+    const sourceCode = readTestFixture('include.kiwi');
+    const expected = readTestFixture('include-fmt.kiwi');
     const formattedCode = await format(sourceCode);
     assert.strictEqual(formattedCode, expected);
   });

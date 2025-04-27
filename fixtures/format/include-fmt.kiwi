@@ -1,0 +1,6 @@
+// package declaration with comment
+package Basic; // package name
+
+// / @include"types.kiwi"
+// /@include 'common.kiwi'
+/// @include basic.kiwi

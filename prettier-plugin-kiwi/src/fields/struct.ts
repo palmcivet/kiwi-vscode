@@ -2,7 +2,13 @@ import type { AstPath, Doc } from 'prettier';
 import type { PrettierOptions } from '../options';
 import type { KiwiSyntaxNode } from '../parsers';
 import { doc } from 'prettier';
-import { formatComment, indentifier, isInlineComment, processBlockContent } from './utils';
+import {
+  childForTypeName,
+  formatComment,
+  indentifier,
+  isInlineComment,
+  processBlockContent,
+} from './utils';
 
 const { group, indent, hardline, join } = doc.builders;
 
@@ -41,14 +47,12 @@ export function structBody(
     if (child.type === 'struct_field') {
       const fieldDoc = childPath.call(printChildren);
       fields.push(fieldDoc);
-    }
-    else if (child.type === 'comment') {
+    } else if (child.type === 'comment') {
       const commentDoc = formatComment(child, previousChild);
       if (previousChild && isInlineComment(child, previousChild)) {
         const lastField = fields.pop()!;
         fields.push([lastField, commentDoc]);
-      }
-      else {
+      } else {
         fields.push(commentDoc);
       }
     }
@@ -74,8 +78,8 @@ export function structField(
     return '';
   }
 
-  const typeNode = node.childForFieldName('struct_field_type');
-  const nameNode = node.childForFieldName('struct_field_name');
+  const typeNode = childForTypeName(node, 'struct_field_type');
+  const nameNode = childForTypeName(node, 'struct_field_name');
 
   return group([indentifier(typeNode), ' ', indentifier(nameNode), ';']);
 }
