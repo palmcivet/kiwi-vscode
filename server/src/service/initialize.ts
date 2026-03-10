@@ -1,11 +1,18 @@
 import type { InitializeParams, InitializeResult } from 'vscode-languageserver/node';
 import type { ServerConnection } from './type';
+import { fileURLToPath } from 'node:url';
 import { configStore } from '@server/store';
 import { CodeActionKind, TextDocumentSyncKind } from 'vscode-languageserver/node';
 
 export function setupOnInitialize(connection: ServerConnection): void {
-  connection.onInitialize(({ capabilities, initializationOptions }: InitializeParams) => {
+  connection.onInitialize(({ capabilities, initializationOptions, workspaceFolders, rootUri }: InitializeParams) => {
     configStore.setWorkspaceFolderCapability(!!(capabilities.workspace && !!capabilities.workspace.workspaceFolders));
+
+    // Extract workspace root path from LSP initialization params
+    const workspaceUri = workspaceFolders?.[0]?.uri ?? rootUri;
+    if (workspaceUri) {
+      configStore.setWorkspaceRoot(fileURLToPath(workspaceUri));
+    }
 
     configStore.setDiagnosticRelatedInformationCapability(!!(capabilities.textDocument
       && capabilities.textDocument.publishDiagnostics

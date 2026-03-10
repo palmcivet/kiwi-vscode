@@ -25,7 +25,10 @@ type KiwiSyntaxNodeType =
   | 'struct_field_name'
   | 'deprecated_tag'
   | 'identifier'
-  | 'array';
+  | 'array'
+  | 'number'
+  | 'path'
+  | 'type_name';
 
 export interface KiwiSyntaxNode extends TreeSitter.SyntaxNode {
   type: KiwiSyntaxNodeType;
