@@ -52,7 +52,7 @@ function resolvePrettier(): PrettierInstance {
         isLocal: true,
       };
       cachedWorkspaceRoot = workspaceRoot;
-      console.log(
+      console.info(
         `[kiwi-formatter] Using local prettier from: ${workspaceRoot}`,
       );
       return cachedInstance;
@@ -71,7 +71,7 @@ function resolvePrettier(): PrettierInstance {
     isLocal: false,
   };
   cachedWorkspaceRoot = workspaceRoot;
-  console.log('[kiwi-formatter] Using bundled prettier');
+  console.info('[kiwi-formatter] Using bundled prettier');
   return cachedInstance;
 }
 

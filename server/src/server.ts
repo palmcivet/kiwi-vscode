@@ -7,11 +7,11 @@ import {
   setupOnHover,
   setupOnInitialize,
   setupOnReference,
+  setupOnFormatting
 } from '@server/service';
 import { FileStore } from '@server/store';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { createConnection, ProposedFeatures, TextDocuments } from 'vscode-languageserver/node';
-import { setupOnFormatting } from './service';
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);

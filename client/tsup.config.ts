@@ -6,4 +6,5 @@ export default defineConfig({
   noExternal: ['vscode-languageclient'],
   format: 'cjs',
   outDir: './out',
+  treeshake: true,
 });

@@ -17,8 +17,9 @@
   "scripts": {
     "tree-sitter": "tree-sitter",
     "postinstall": "node-gyp-build",
+    "build": "prebuildify --napi",
     "generate": "tree-sitter generate",
-    "clean": "rimraf build *.dylib *.wasm",
+    "clean": "rimraf build prebuilds *.dylib *.wasm",
     "dev": "tree-sitter build --wasm && tree-sitter playground",
     "test": "tree-sitter test"
   },
@@ -35,6 +36,7 @@
     "node-gyp-build": "^4.8.4"
   },
   "devDependencies": {
+    "prebuildify": "^6.0.1",
     "tree-sitter-cli": "^0.25.3"
   }
 }
