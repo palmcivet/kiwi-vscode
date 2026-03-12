@@ -15,12 +15,14 @@ Forked from [connorskees/kiwi-lsp](https://github.com/connorskees/kiwi-lsp), whi
 - [Kiwi VSCode](#kiwi-vscode)
   - [Table of Contents](#table-of-contents)
   - [Basic Features](#basic-features)
+  - [Code Formatting](#code-formatting)
   - [`@include` Syntax](#include-syntax)
     - [Motivation](#motivation)
     - [Syntax Specification](#syntax-specification)
     - [Plugin Adaptation](#plugin-adaptation)
     - [Test Data](#test-data)
   - [Build Optimization](#build-optimization)
+  - [Documentation](#documentation)
   - [Logo Design](#logo-design)
   - [Credits](#credits)
   - [License](#license)
@@ -42,6 +44,19 @@ The original plugin provides the following features:
 - Quick fixes
   - Auto-correct case errors
   - Generate next available ID for messages (especially useful for large messages with hundreds of fields)
+- Code formatting (Beta)
+  - Built on [Prettier](https://prettier.io/) with a custom plugin (`prettier-plugin-kiwi`)
+  - Uses [tree-sitter](https://tree-sitter.github.io/tree-sitter/) for parsing
+  - Follows Protobuf-style formatting conventions
+- Automatic update checking
+  - Checks for new versions from GitHub Releases on activation
+  - Can be triggered manually via `Kiwi: Check for Updates` command
+
+## Code Formatting
+
+This extension includes a built-in code formatter for `.kiwi` files, implemented as a Prettier plugin (`prettier-plugin-kiwi`) powered by a tree-sitter grammar (`tree-sitter-kiwi`). The formatter normalizes whitespace, blank lines, comments, and quote styles to produce consistent, Protobuf-style output.
+
+For the full formatting specification, see [Kiwi Formatting Specification](./docs/1-kiwi-grammar.md).
 
 ## `@include` Syntax
 ### Motivation
@@ -104,32 +119,19 @@ package/base-2.kiwi    /
 
 ## Build Optimization
 
-The original project only used `tsc` to compile code without a bundler. When packaging the plugin with `vsce`, the following prompt was received:
-
-```bash
-This extension consists of 590 files, out of which 341 are JavaScript files. For performance reasons, you should bundle your extension: https://aka.ms/vscode-bundle-extension
-....
-kiwi-vscode-1.0.3.vsix (590 files, 759.55KB)
-```
+The original project only used `tsc` to compile code without a bundler. When packaging the plugin with `vsce`, the unoptimized output contained 590 files totaling ~760KB.
 
 This project implements build optimizations:
 
 1. Uses `tsup` as the build tool
 2. Uses `pnpm workspace` to manage `server/` and `client/` modules
 
-The optimized build output is as follows:
+The optimized build reduces the packaged extension to ~59 files totaling ~1.75MB.
 
-```bash
-client build: CJS out/extension.js 1.02 KB
-client build: CJS ⚡️ Build success in 27ms
-client build: Done
-server build: CJS out/server.js 19.45 KB
-server build: CJS ⚡️ Build success in 111ms
-...
-kiwi-vscode-1.0.3.vsix (11 files, 131.39 KB)
-```
+## Documentation
 
-The compressed plugin package size is reduced by 80%, and the extracted files are more streamlined.
+- [Kiwi Formatting Specification](./docs/1-kiwi-grammar.md) - Canonical formatting rules for Kiwi source files
+- [Formatter Technical Documentation](./docs/2-formatter-spec.md) - Architecture and implementation details of the Prettier plugin
 
 ## Logo Design
 

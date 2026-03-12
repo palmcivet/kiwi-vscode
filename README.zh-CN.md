@@ -15,12 +15,14 @@
 - [Kiwi VSCode](#kiwi-vscode)
   - [目录](#目录)
   - [基础功能](#基础功能)
+  - [代码格式化](#代码格式化)
   - [`@include` 语法](#include-语法)
     - [需求背景](#需求背景)
     - [语法规范](#语法规范)
     - [插件适配](#插件适配)
     - [测试数据](#测试数据)
   - [构建优化](#构建优化)
+  - [文档](#文档)
   - [Logo 设计](#logo-设计)
   - [致谢](#致谢)
   - [协议](#协议)
@@ -42,6 +44,18 @@
 - 快速修复
   - 自动纠正大小写错误
   - 为消息生成下一个可用 ID（特别适用于包含数百个字段的大型消息）
+- 代码格式化（Beta）
+  - 基于 [Prettier](https://prettier.io/) 自定义插件（`prettier-plugin-kiwi`）实现
+  - 使用 [tree-sitter](https://tree-sitter.github.io/tree-sitter/) 进行语法解析
+- 自动更新检查
+  - 激活时自动从 GitHub Releases 检查新版本
+  - 可通过 `Kiwi: Check for Updates` 命令手动触发
+
+## 代码格式化
+
+本扩展内置了 `.kiwi` 文件的代码格式化器，实现为基于 tree-sitter 语法（`tree-sitter-kiwi`）的 Prettier 插件（`prettier-plugin-kiwi`）。格式化器会规范化空格、空行、注释和引号风格，生成一致的 Protobuf 风格输出。
+
+完整的格式化规范请参见 [Kiwi 格式化规范](./docs/1-kiwi-grammar.zh-CN.md)。
 
 ## `@include` 语法
 ### 需求背景
@@ -104,32 +118,19 @@ package/base-2.kiwi    /
 
 ## 构建优化
 
-原始项目仅使用 `tsc` 编译代码，未采用打包工具。在使用 `vsce` 打包插件时会收到以下提示：
-
-```bash
-This extension consists of 590 files, out of which 341 are JavaScript files. For performance reasons, you should bundle your extension: https://aka.ms/vscode-bundle-extension
-....
-kiwi-vscode-1.0.3.vsix (590 files, 759.55KB)
-```
+原始项目仅使用 `tsc` 编译代码，未采用打包工具。未优化时使用 `vsce` 打包插件包含 590 个文件，总计约 760KB。
 
 本项目进行了构建优化：
 
 1. 采用 `tsup` 作为构建工具
 2. 使用 `pnpm workspace` 管理 `server/` 和 `client/` 两个模块
 
-优化后的构建产物如下：
+在包含 Prettier 和 Tree Sitter 的情况下，仍保持为最小化的构建结果，总计约 59 个文件，总计约 1.75MB。
 
-```bash
-client build: CJS out/extension.js 1.02 KB
-client build: CJS ⚡️ Build success in 27ms
-client build: Done
-server build: CJS out/server.js 19.45 KB
-server build: CJS ⚡️ Build success in 111ms
-...
-kiwi-vscode-1.0.3.vsix (11 files, 131.39 KB)
-```
+## 文档
 
-压缩后的插件包体积减小了 80%，解压后的文件则更加精简。
+- [Kiwi 格式化规范](./docs/1-kiwi-grammar.md) - Kiwi 源文件的标准格式化规则
+- [Formatter 技术文档](./docs/2-formatter-spec.md) - Prettier 插件的架构与实现细节
 
 ## Logo 设计
 
