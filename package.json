@@ -2,7 +2,7 @@
   "publisher": "palmcivet",
   "name": "kiwi-vscode",
   "displayName": "Kiwi VSCode",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "description": "Better support for the Kiwi message format in VSCode.",
   "author": "Palm Civet",
@@ -59,9 +59,21 @@
           "type": "boolean",
           "default": true,
           "description": "(Beta) Enable code formatting."
+        },
+        "kiwi-vscode.checkForUpdates": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic update checking from GitHub Releases."
         }
       }
     },
+    "commands": [
+      {
+        "command": "kiwi-vscode.checkForUpdates",
+        "title": "Check for Updates",
+        "category": "Kiwi"
+      }
+    ],
     "languages": [
       {
         "id": "kiwi",

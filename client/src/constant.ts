@@ -1,3 +1,4 @@
-import { name } from '../../package.json';
+import { name, version } from '../../package.json';
 
 export const PluginKey = name;
+export const PluginVersion = version;

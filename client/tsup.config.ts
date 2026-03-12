@@ -3,7 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: ['./src/extension.ts'],
   external: ['vscode', 'node:path'],
-  noExternal: ['vscode-languageclient'],
+  noExternal: ['vscode-languageclient', 'semver'],
   format: 'cjs',
   outDir: './out',
   treeshake: true,

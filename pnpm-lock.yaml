@@ -47,10 +47,16 @@ importers:
 
   client:
     dependencies:
+      semver:
+        specifier: ^7.6.3
+        version: 7.7.1
       vscode-languageclient:
         specifier: ^9.0.1
         version: 9.0.1
     devDependencies:
+      '@types/semver':
+        specifier: ^7.5.8
+        version: 7.7.1
       '@types/vscode':
         specifier: ^1.75.1
         version: 1.97.0
@@ -711,6 +717,9 @@ packages:
 
   '@types/node@18.19.80':
     resolution: {integrity: sha512-kEWeMwMeIvxYkeg1gTc01awpwLbfMRZXdIhwRcakd/KlK53jmRC26LqcbIt7fnAQTu5GzlnWmzA3H6+l1u6xxQ==}
+
+  '@types/semver@7.7.1':
+    resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -3789,6 +3798,8 @@ snapshots:
   '@types/node@18.19.80':
     dependencies:
       undici-types: 5.26.5
+
+  '@types/semver@7.7.1': {}
 
   '@types/unist@3.0.3': {}
 

@@ -1,14 +1,20 @@
 import type { ExtensionContext } from 'vscode';
-import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import type {
+  LanguageClientOptions,
+  ServerOptions,
+} from 'vscode-languageclient/node';
 import { join } from 'node:path';
 import { PluginKey } from '@client/constant';
+import { registerUpdateChecker } from '@client/update-checker';
 import { workspace } from 'vscode';
 import { LanguageClient, TransportKind } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-  const serverModule = context.asAbsolutePath(join('server', 'out', 'server.js'));
+  const serverModule = context.asAbsolutePath(
+    join('server', 'out', 'server.js'),
+  );
 
   const serverOptions: ServerOptions = {
     run: { module: serverModule, transport: TransportKind.ipc },
@@ -45,12 +51,19 @@ export function activate(context: ExtensionContext) {
 
       client.sendNotification('workspace/didChangeConfiguration', {
         settings: {
-          enableWarningDiagnostics: workspace.getConfiguration(PluginKey).get('enableWarningDiagnostics'),
-          enableFormatting: workspace.getConfiguration(PluginKey).get('enableFormatting'),
+          enableWarningDiagnostics: workspace
+            .getConfiguration(PluginKey)
+            .get('enableWarningDiagnostics'),
+          enableFormatting: workspace
+            .getConfiguration(PluginKey)
+            .get('enableFormatting'),
         },
       });
     }),
   );
+
+  // Register update checker (automatic check after delay + manual command)
+  registerUpdateChecker(context);
 
   client.start();
 }

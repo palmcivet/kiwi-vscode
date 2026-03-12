@@ -1,21 +1,31 @@
-**/*.ts
+# Generated files
 **/*.map
 **/*.vsix
 
 # Editor directories and files
 **/tsconfig.json
-**/node_modules/**
+**/node_modules
+**/scripts
 .gitignore
 pnpm-*.yaml
 README.*.md
 eslint.config.mjs
 .prettierrc
-.github/**
-.vscode/**
-fixtures/**
-tree-sitter-kiwi/**
-assets/**
-!assets/icon.png
+.github
+.vscode
 
-ai/**
+# Project files
+**/*.ts
+**/fixtures
+**/assets
+tree-sitter-kiwi
+prettier-plugin-kiwi
+
+# Explicit include
+!assets/icon.png
+!server/out/node_modules
+!server/out/node_modules/prettier
+!server/out/node_modules/prettier/**
+
+ai
 AGENTS.md
