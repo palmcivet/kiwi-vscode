@@ -21,13 +21,13 @@ Source Code (.kiwi)
 
 **Key files:**
 
-| File | Role |
-|------|------|
-| `prettier-plugin-kiwi/src/parsers.ts` | Tree-sitter parser integration and AST type definitions |
-| `prettier-plugin-kiwi/src/printers.ts` | Core formatting logic |
-| `prettier-plugin-kiwi/src/options.ts` | Plugin option declarations |
-| `prettier-plugin-kiwi/src/languages.ts` | Language registration for `.kiwi` files |
-| `tree-sitter-kiwi/grammar.js` | Tree-sitter grammar defining the Kiwi language |
+| File                                    | Role                                                    |
+| --------------------------------------- | ------------------------------------------------------- |
+| `prettier-plugin-kiwi/src/parsers.ts`   | Tree-sitter parser integration and AST type definitions |
+| `prettier-plugin-kiwi/src/printers.ts`  | Core formatting logic                                   |
+| `prettier-plugin-kiwi/src/options.ts`   | Plugin option declarations                              |
+| `prettier-plugin-kiwi/src/languages.ts` | Language registration for `.kiwi` files                 |
+| `tree-sitter-kiwi/grammar.js`           | Tree-sitter grammar defining the Kiwi language          |
 
 ## AST Structure
 
@@ -111,7 +111,7 @@ source_file
 The grammar defines `include_directive` as:
 
 ```js
-include_directive: $ => seq('/// @include ', $.path)
+include_directive: ($) => seq('/// @include ', $.path);
 ```
 
 The literal prefix `'/// @include '` (with trailing space) must match exactly. This means:
@@ -129,13 +129,13 @@ Malformed include-like lines remain plain `comment` nodes and go through comment
 
 The `formatCommentText` function normalizes comment spacing after `//`:
 
-| Input | Output | Explanation |
-|-------|--------|-------------|
-| `//comment` | `// comment` | Insert space after `//` |
-| `//  comment` | `// comment` | Collapse multiple spaces to one |
-| `///comment` | `// /comment` | `//` + space + rest (rest starts with `/`) |
-| `/// comment` | `// / comment` | `//` + space + trimmed rest |
-| `////comment` | `// //comment` | `//` + space + rest (rest is `//comment`) |
+| Input         | Output         | Explanation                                |
+| ------------- | -------------- | ------------------------------------------ |
+| `//comment`   | `// comment`   | Insert space after `//`                    |
+| `//  comment` | `// comment`   | Collapse multiple spaces to one            |
+| `///comment`  | `// /comment`  | `//` + space + rest (rest starts with `/`) |
+| `/// comment` | `// / comment` | `//` + space + trimmed rest                |
+| `////comment` | `// //comment` | `//` + space + rest (rest is `//comment`)  |
 
 Algorithm:
 
@@ -151,11 +151,11 @@ This preserves extra slashes (like `///` becoming `// /`) while normalizing whit
 
 For real `include_directive` AST nodes, the path is normalized to double-quoted form:
 
-| Input | Output |
-|-------|--------|
-| `/// @include basic.kiwi` | `/// @include "basic.kiwi"` |
+| Input                       | Output                      |
+| --------------------------- | --------------------------- |
+| `/// @include basic.kiwi`   | `/// @include "basic.kiwi"` |
 | `/// @include 'types.kiwi'` | `/// @include "types.kiwi"` |
-| `/// @include "base.kiwi"` | `/// @include "base.kiwi"` |
+| `/// @include "base.kiwi"`  | `/// @include "base.kiwi"`  |
 
 The `formatIncludePath` function strips any surrounding single or double quotes, then wraps in double quotes.
 
@@ -164,11 +164,13 @@ The `formatIncludePath` function strips any surrounding single or double quotes,
 Fields are reconstructed from their named children with normalized spacing:
 
 **Enum field**: `NAME = VALUE;`
+
 ```
 CREATED = 0;
 ```
 
 **Message field**: `type name = number;` or `type name = number [deprecated];`
+
 ```
 int id = 1;
 int oldField = 1 [deprecated];
@@ -176,11 +178,13 @@ string[] names = 2;
 ```
 
 **Struct field**: `type name;`
+
 ```
 float x;
 ```
 
 Spacing rules:
+
 - Exactly one space around `=`
 - No space before `;`
 - Exactly one space before `[deprecated]`
@@ -195,6 +199,7 @@ Normalized to: `package Name;` -- one space after keyword, no space before semic
 Declarations (`enum`, `message`, `struct`) follow this pattern:
 
 **Non-empty body:**
+
 ```kiwi
 keyword Name {
   ...body...
@@ -202,6 +207,7 @@ keyword Name {
 ```
 
 **Empty body** (no fields, no comments):
+
 ```kiwi
 keyword Name {}
 ```
@@ -336,7 +342,7 @@ This is the core layout logic. It transforms a raw `node.children` array into a 
 
 ```ts
 interface ProcessedItem {
-  node: KiwiSyntaxNode;           // The primary node (field, comment, declaration, etc.)
+  node: KiwiSyntaxNode; // The primary node (field, comment, declaration, etc.)
   inlineComment?: KiwiSyntaxNode; // An attached inline comment, if any
   preserveBlankLineBefore?: boolean; // Whether to emit an extra blank line before this item
 }
@@ -353,6 +359,7 @@ Processing steps:
    - Add as a standalone item. At top level, preserve blank lines; in bodies, do not preserve blank lines before non-comment items.
 
 The `isBody` parameter controls blank line behavior:
+
 - `isBody = true`: Blank lines are only preserved before standalone comments; blank lines between fields are removed.
 - `isBody = false` (top level): Blank lines are preserved between any two items.
 
@@ -379,7 +386,7 @@ const prevNode = prevItem.inlineComment ?? prevItem.node;
 `printDeclaration` wraps the body docs:
 
 ```ts
-group([keyword, ' ', name, ' {', indent(bodyDocs), hardline, '}'])
+group([keyword, ' ', name, ' {', indent(bodyDocs), hardline, '}']);
 ```
 
 The `indent()` call applies to the entire body content (which starts with `hardline`), so Prettier indents all body items by `tabWidth` spaces.
@@ -398,22 +405,22 @@ Empty source files return an empty string.
 
 The plugin exports four things:
 
-| Export | Value |
-|--------|-------|
-| `languages` | Registers `.kiwi` file extension with parser name `kiwi` |
-| `parsers` | Maps parser name `kiwi` to the tree-sitter parse function, with `astFormat: 'kiwi-ast'` |
-| `printers` | Maps format name `kiwi-ast` to the printer with its `print` function |
-| `options` | Declares plugin-specific options (`alignComments`, `alignFields`, `trimTrailingWhitespace`) |
+| Export      | Value                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| `languages` | Registers `.kiwi` file extension with parser name `kiwi`                                    |
+| `parsers`   | Maps parser name `kiwi` to the tree-sitter parse function, with `astFormat: 'kiwi-ast'`     |
+| `printers`  | Maps format name `kiwi-ast` to the printer with its `print` function                        |
+| `options`   | Declares plugin-specific options (`alignComments`, `alignFields`, `trimTrailingWhitespace`) |
 
 ### Doc IR Primitives Used
 
 The printer uses only three Prettier Doc builders:
 
-| Builder | Purpose |
-|---------|---------|
-| `hardline` | Unconditional line break |
-| `indent(docs)` | Increase indentation for wrapped content |
-| `group(docs)` | Group content (used for logical grouping; no soft-wrap behavior needed since Kiwi lines are always short) |
+| Builder        | Purpose                                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------------------- |
+| `hardline`     | Unconditional line break                                                                                  |
+| `indent(docs)` | Increase indentation for wrapped content                                                                  |
+| `group(docs)`  | Group content (used for logical grouping; no soft-wrap behavior needed since Kiwi lines are always short) |
 
 String literals and arrays of `Doc` values are used directly for concatenation.
 

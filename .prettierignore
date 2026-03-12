@@ -1,0 +1,8 @@
+node_modules
+**/out
+**/dist
+fixtures
+tree-sitter-kiwi/bindings
+tree-sitter-kiwi/src
+pnpm-lock.yaml
+CHANGELOG.md

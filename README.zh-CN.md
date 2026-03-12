@@ -58,6 +58,7 @@
 完整的格式化规范请参见 [Kiwi 格式化规范](./docs/1-kiwi-grammar.zh-CN.md)。
 
 ## `@include` 语法
+
 ### 需求背景
 
 原始插件的代码分析功能仅限于当前打开的文件。当存在跨文件引用时（例如 `derived.kiwi` 引用了 `enum.kiwi`、`base-1.kiwi`、`base-2.kiwi` 中的类型），现有功能无法正确支持这种用法，导致代码检查报错。
@@ -74,19 +75,23 @@
 
 - 必须放在内容的开头，忽略换行等空白字符，可以有多行，放在其他行无效（等同于注释）
   - 有效
+
     ```kiwi
 
     /// @include ../enum.kiwi     // 有效
 
     /// @include "./base-1.kiwi"  // 空了一行，有效
     ```
+
   - 无效
+
     ```kiwi
     message Rect {}
 
     /// @include './base-1.kiwi'  // 无效，因为前面有内容
     message Vector {}
     ```
+
 - 必须以 `/// @include ` 开头
 - 文件支持绝对路径和相对路径
 - 文件名可使用 `''` 或 `""` 包裹，也可以不写引号

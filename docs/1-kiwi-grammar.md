@@ -55,10 +55,10 @@ Files must end with exactly one newline character. Empty files produce no output
 
 ## 2. Indentation
 
-* Indentation uses spaces.
-* The default indentation width is **2 spaces**.
-* Content inside declaration bodies (`{` and `}`) is indented by one level.
-* Top-level elements are not indented.
+- Indentation uses spaces.
+- The default indentation width is **2 spaces**.
+- Content inside declaration bodies (`{` and `}`) is indented by one level.
+- Top-level elements are not indented.
 
 ## 3. Whitespace Rules
 
@@ -136,9 +136,9 @@ message User {
 
 Blank lines between top-level elements (package declarations, include directives, type declarations, or standalone comments):
 
-* Existing blank lines in the source are **preserved**.
-* Multiple consecutive blank lines are **collapsed into a single blank line**.
-* If no blank line exists between two top-level elements in the source, the formatter **does not insert one**.
+- Existing blank lines in the source are **preserved**.
+- Multiple consecutive blank lines are **collapsed into a single blank line**.
+- If no blank line exists between two top-level elements in the source, the formatter **does not insert one**.
 
 Example: three blank lines collapse into one, and an existing blank line between `Foo` and `Bar` is preserved.
 
@@ -146,9 +146,9 @@ Example: three blank lines collapse into one, and an existing blank line between
 
 Inside declaration bodies (`enum_body`, `message_body`, `struct_body`):
 
-* Blank lines **between fields are removed**.
-* Blank lines **before standalone comments are preserved** (multiple lines collapse to one).
-* Blank lines **after standalone comments and before the next field are removed**.
+- Blank lines **between fields are removed**.
+- Blank lines **before standalone comments are preserved** (multiple lines collapse to one).
+- Blank lines **after standalone comments and before the next field are removed**.
 
 Example:
 
@@ -208,9 +208,9 @@ package Example; // package name
 
 A comment is considered inline if:
 
-* It appears on the same line as the preceding element in the source.
-* The preceding element is not another comment.
-* The preceding element is not an opening brace `{`.
+- It appears on the same line as the preceding element in the source.
+- The preceding element is not another comment.
+- The preceding element is not an opening brace `{`.
 
 ### 5.4 Comments After Opening Braces
 
@@ -253,9 +253,9 @@ Format: `package Name;`
 
 Rules:
 
-* One space follows the `package` keyword.
-* The name is immediately followed by `;` with no preceding space.
-* Extra spaces are removed.
+- One space follows the `package` keyword.
+- The name is immediately followed by `;` with no preceding space.
+- Extra spaces are removed.
 
 ```kiwi
 // Input                        // Output
@@ -272,8 +272,8 @@ Format:
 
 Rules:
 
-* Paths must be enclosed in double quotes.
-* Paths written with single quotes or without quotes are converted to double quotes.
+- Paths must be enclosed in double quotes.
+- Paths written with single quotes or without quotes are converted to double quotes.
 
 | Input                       | Output                      |
 | --------------------------- | --------------------------- |
@@ -315,8 +315,8 @@ NAME = VALUE;
 
 Rules:
 
-* One space around `=`.
-* `;` appears immediately after the value with no preceding space.
+- One space around `=`.
+- `;` appears immediately after the value with no preceding space.
 
 ### 8.2 Empty Enum
 
@@ -344,9 +344,9 @@ type name = number [deprecated];
 
 Rules:
 
-* One space between type, name, `=`, and the numeric identifier.
-* `[deprecated]` is optional and preceded by one space when present.
-* `;` appears immediately after the final element.
+- One space between type, name, `=`, and the numeric identifier.
+- `[deprecated]` is optional and preceded by one space when present.
+- `;` appears immediately after the final element.
 
 ### 9.2 Empty Message
 
@@ -370,9 +370,9 @@ type name;
 
 Rules:
 
-* One space between the type and the field name.
-* `;` appears immediately after the name.
-* Struct fields do not have numeric identifiers or deprecated markers.
+- One space between the type and the field name.
+- `;` appears immediately after the name.
+- Struct fields do not have numeric identifiers or deprecated markers.
 
 ### 10.2 Empty Struct
 

@@ -59,6 +59,7 @@ This extension includes a built-in code formatter for `.kiwi` files, implemented
 For the full formatting specification, see [Kiwi Formatting Specification](./docs/1-kiwi-grammar.md).
 
 ## `@include` Syntax
+
 ### Motivation
 
 The original plugin's code analysis functionality was limited to the currently open file. When cross-file references existed (e.g., `derived.kiwi` referencing types from `enum.kiwi`, `base-1.kiwi`, and `base-2.kiwi`), the existing functionality couldn't properly support this usage, resulting in code checking errors.
@@ -75,19 +76,23 @@ To address this, this plugin introduces a syntax that uses `/// @include filenam
 
 - Must be placed at the beginning of the content, ignoring whitespace characters like line breaks. Can have multiple lines, but placing it elsewhere is invalid (treated as comments)
   - Valid
+
     ```kiwi
 
     /// @include ../enum.kiwi     // Valid
 
     /// @include "./base-1.kiwi"  // Valid with empty line
     ```
+
   - Invalid
+
     ```kiwi
     message Rect {}
 
     /// @include './base-1.kiwi'  // Invalid, because there's content before
     message Vector {}
     ```
+
 - Must start with `/// @include `
 - File paths support both absolute and relative paths
 - Filenames can be wrapped in `''` or `""`, or without quotes

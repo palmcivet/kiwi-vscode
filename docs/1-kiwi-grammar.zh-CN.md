@@ -171,19 +171,19 @@ Kiwi 仅支持 `//` 单行注释。
 
 `//` 后恰好一个空格，多余空格被压缩：
 
-| 输入 | 输出 |
-|------|------|
-| `//comment` | `// comment` |
+| 输入               | 输出              |
+| ------------------ | ----------------- |
+| `//comment`        | `// comment`      |
 | `//  extra spaces` | `// extra spaces` |
-| `//` (空注释) | `//` |
+| `//` (空注释)      | `//`              |
 
 ### 5.2 多斜杠注释
 
 `//` 之后的额外斜杠被视为注释内容的一部分。规范化规则：在前两个 `//` 之后插入一个空格，余下内容原样保留：
 
-| 输入 | 输出 | 解释 |
-|------|------|------|
-| `///comment` | `// /comment` | `//` + 空格 + `/comment` |
+| 输入          | 输出           | 解释                      |
+| ------------- | -------------- | ------------------------- |
+| `///comment`  | `// /comment`  | `//` + 空格 + `/comment`  |
 | `/// comment` | `// / comment` | `//` + 空格 + `/ comment` |
 | `////comment` | `// //comment` | `//` + 空格 + `//comment` |
 
@@ -200,6 +200,7 @@ package Example; // package name
 ```
 
 内联注释的判定条件：
+
 - 注释与前方元素在源码中位于同一行。
 - 前方元素不是另一个注释。
 - 前方元素不是开花括号 `{`。
@@ -259,20 +260,20 @@ package    Example   ;         package Example;
 - 路径统一使用双引号包裹。
 - 单引号或无引号的路径自动转换为双引号。
 
-| 输入 | 输出 |
-|------|------|
-| `/// @include basic.kiwi` | `/// @include "basic.kiwi"` |
+| 输入                        | 输出                        |
+| --------------------------- | --------------------------- |
+| `/// @include basic.kiwi`   | `/// @include "basic.kiwi"` |
 | `/// @include 'types.kiwi'` | `/// @include "types.kiwi"` |
-| `/// @include "base.kiwi"` | `/// @include "base.kiwi"` |
+| `/// @include "base.kiwi"`  | `/// @include "base.kiwi"`  |
 
 ### 7.1 无效的 include 语法
 
 include 指令的语法前缀是 `/// @include `（末尾有一个空格）。不符合此精确模式的内容会被解析为普通注释，按注释规则格式化：
 
-| 输入 | 解析为 | 输出 |
-|------|--------|------|
-| `///@include 'common.kiwi'` | 注释 | `// /@include 'common.kiwi'` |
-| `/// @include"types.kiwi"` | 注释 | `// / @include"types.kiwi"` |
+| 输入                        | 解析为 | 输出                         |
+| --------------------------- | ------ | ---------------------------- |
+| `///@include 'common.kiwi'` | 注释   | `// /@include 'common.kiwi'` |
+| `/// @include"types.kiwi"`  | 注释   | `// / @include"types.kiwi"`  |
 
 ## 8 enum 声明
 
