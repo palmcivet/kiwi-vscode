@@ -3,7 +3,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { _, RemoteConsole, TextDocuments } from 'vscode-languageserver/node';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { parseIncludes, parseSchema } from '@server/parser';
+import { normalizePath, parseIncludes, parseSchema } from '@server/parser';
 
 export class FileStore {
   private readonly console: RemoteConsole & _;
@@ -51,14 +51,15 @@ export class FileStore {
     const visited = new Set<string>();
 
     const load = (currentPath: string) => {
-      if (visited.has(currentPath))
+      const normalizedPath = normalizePath(currentPath);
+      if (visited.has(normalizedPath))
         return;
-      visited.add(currentPath);
+      visited.add(normalizedPath);
 
       try {
         const content = readFileSync(currentPath, 'utf8');
         const [schema, _] = parseSchema(content);
-        schemas.set(currentPath, schema);
+        schemas.set(normalizedPath, schema);
 
         // Recursively load included schemas
         const includes = parseIncludes(content);

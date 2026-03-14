@@ -12,7 +12,7 @@
  *   node scripts/build-prebuilds.mjs [target]
  *
  * Arguments:
- *   target - Optional. One of: all, darwin-arm64, darwin-x64, linux-x64, linux-arm64, win32-x64
+ *   target - Optional. One of: all, darwin-arm64, darwin-x64, linux-x64, linux-arm64
  *            Defaults to "all".
  *
  * Prerequisites:
@@ -22,9 +22,9 @@
  *   - prebuildify installed (we use its downloaded Node.js headers)
  */
 import { execFileSync } from 'node:child_process';
-import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
-import { get as httpsGet } from 'node:https';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -70,13 +70,6 @@ const TARGETS = [
     sharedFlag: '-shared',
     outputExt: '.node',
   },
-  {
-    platform: 'win32',
-    arch: 'x64',
-    zigTarget: 'x86_64-windows-gnu',
-    sharedFlag: '-shared',
-    outputExt: '.node',
-  },
 ];
 
 /**
@@ -113,7 +106,7 @@ function findNodeHeaders() {
   const nodeVersion = process.versions.node;
 
   // 1. Check prebuildify's cached headers
-  const tmpBase = join(process.env.TMPDIR || '/tmp', 'prebuildify', 'node');
+  const tmpBase = join(tmpdir(), 'prebuildify', 'node');
   if (existsSync(tmpBase)) {
     const versions = readdirSync(tmpBase).sort();
     for (let i = versions.length - 1; i >= 0; i--) {
@@ -125,7 +118,8 @@ function findNodeHeaders() {
   }
 
   // 2. Check node-gyp's cache directories
-  const home = process.env.HOME || '';
+  const home = homedir();
+  /** @type {string[]} */
   const nodeGypPaths = [
     join(home, '.cache', 'node-gyp', nodeVersion, 'include', 'node'),
     join(home, '.node-gyp', nodeVersion, 'include', 'node'),
@@ -197,68 +191,6 @@ function findNodeAddonApiDir() {
 }
 
 /**
- * Download a file from a URL to a local path.
- * @param {string} url
- * @param {string} dest
- * @returns {Promise<void>}
- */
-function downloadFile(url, dest) {
-  return new Promise((resolve, reject) => {
-    const file = createWriteStream(dest);
-    httpsGet(url, (response) => {
-      // Follow redirects
-      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-        file.close();
-        rmSync(dest, { force: true });
-        return downloadFile(response.headers.location, dest).then(resolve, reject);
-      }
-      if (response.statusCode !== 200) {
-        file.close();
-        rmSync(dest, { force: true });
-        reject(new Error(`Download failed: HTTP ${response.statusCode} for ${url}`));
-        return;
-      }
-      response.pipe(file);
-      file.on('finish', () => { file.close(); resolve(); });
-    }).on('error', (err) => {
-      file.close();
-      rmSync(dest, { force: true });
-      reject(err);
-    });
-  });
-}
-
-/**
- * Download node.lib for Windows linking.
- * On Windows, N-API symbols use __declspec(dllimport) and the linker requires
- * an import library (node.lib) to resolve them. node.lib is provided by the
- * official Node.js distribution.
- *
- * N-API is ABI-stable, so any Node.js version's node.lib works for N-API addons.
- *
- * @param {string} arch - target architecture ("x64" or "arm64")
- * @param {string} tmpDir - directory to download into
- * @returns {Promise<string>} path to the downloaded node.lib
- */
-async function getNodeLib(arch, tmpDir) {
-  const nodeLibPath = join(tmpDir, `node-${arch}.lib`);
-  if (existsSync(nodeLibPath)) {
-    return nodeLibPath;
-  }
-
-  // Use current Node.js version for the download
-  const nodeVersion = process.versions.node;
-  const winArch = arch === 'arm64' ? 'arm64' : 'x64';
-  const url = `https://nodejs.org/dist/v${nodeVersion}/win-${winArch}/node.lib`;
-
-  console.log(`  Downloading node.lib from ${url}`);
-  mkdirSync(tmpDir, { recursive: true });
-  await downloadFile(url, nodeLibPath);
-  console.log(`  Downloaded node.lib to ${nodeLibPath}`);
-  return nodeLibPath;
-}
-
-/**
  * Build prebuild for a specific target platform by invoking zig directly.
  *
  * Compilation strategy:
@@ -269,13 +201,12 @@ async function getNodeLib(arch, tmpDir) {
  * For N-API addons, symbols like napi_create_error are resolved at runtime
  * by the Node.js process. We use -undefined dynamic_lookup (macOS) or
  * --allow-shlib-undefined (Linux) to allow this.
- * On Windows, we link against node.lib (import library) instead.
  *
  * @param {Target} target
  * @param {string} nodeHeadersDir
  * @param {string} nodeAddonApiDir
  */
-async function buildTarget(target, nodeHeadersDir, nodeAddonApiDir) {
+function buildTarget(target, nodeHeadersDir, nodeAddonApiDir) {
   const key = `${target.platform}-${target.arch}`;
   console.log(`\n${'='.repeat(60)}`);
   console.log(`Building ${key} (zig target: ${target.zigTarget})`);
@@ -318,11 +249,11 @@ async function buildTarget(target, nodeHeadersDir, nodeAddonApiDir) {
   const objectFiles = [];
 
   for (const src of cSources) {
-    const baseName = src.replace(/.*\//, '').replace('.c', '.o');
+    const baseName = basename(src, '.c') + '.o';
     const objFile = join(tmpDir, `${key}-${baseName}`);
     objectFiles.push(objFile);
 
-    console.log(`  CC  ${src.replace(root + '/', '')}`);
+    console.log(`  CC  ${relative(root, src)}`);
     execFileSync(
       'zig',
       [
@@ -346,7 +277,7 @@ async function buildTarget(target, nodeHeadersDir, nodeAddonApiDir) {
   const bindingObj = join(tmpDir, `${key}-binding.o`);
   objectFiles.push(bindingObj);
 
-  console.log(`  CXX ${bindingSrc.replace(root + '/', '')}`);
+  console.log(`  CXX ${relative(root, bindingSrc)}`);
   execFileSync(
     'zig',
     [
@@ -382,16 +313,9 @@ async function buildTarget(target, nodeHeadersDir, nodeAddonApiDir) {
     linkArgs.push('-Wl,-undefined,dynamic_lookup');
   } else if (target.platform === 'linux') {
     linkArgs.push('-Wl,--allow-shlib-undefined');
-  } else if (target.platform === 'win32') {
-    // Windows DLLs cannot have undefined symbols. N-API functions are decorated
-    // with __declspec(dllimport) and require node.lib (an import library) at
-    // link time. node.lib tells the linker these symbols will be provided by
-    // node.exe at runtime.
-    const nodeLib = await getNodeLib(target.arch, join(root, '.tmp-build'));
-    linkArgs.push(nodeLib);
   }
 
-  console.log(`  LINK ${outputFile.replace(root + '/', '')}`);
+  console.log(`  LINK ${relative(root, outputFile)}`);
   execFileSync('zig', linkArgs, {
     cwd: root,
     stdio: 'inherit',
@@ -424,53 +348,90 @@ const nodeAddonApiDir = findNodeAddonApiDir();
 console.log(`Node.js headers: ${nodeHeadersDir}`);
 console.log(`node-addon-api: ${nodeAddonApiDir}`);
 
-if (requestedTarget !== 'all') {
-  const target = TARGETS.find(
-    (t) => `${t.platform}-${t.arch}` === requestedTarget,
-  );
-  if (!target) {
-    console.error(
-      `Unknown target: ${requestedTarget}\n` +
-        `Available targets: ${TARGETS.map((t) => `${t.platform}-${t.arch}`).join(', ')}, all`,
-    );
-    process.exit(1);
+/**
+ * Resolve the list of targets to build from the CLI argument.
+ * Supports: "all", a single target like "linux-x64", or comma-separated
+ * targets like "linux-x64,linux-arm64".
+ *
+ * @param {string} requested
+ * @returns {Target[]}
+ */
+function resolveTargets(requested) {
+  if (requested === 'all') {
+    return TARGETS;
   }
-  await buildTarget(target, nodeHeadersDir, nodeAddonApiDir);
-} else {
-  // Build all targets
+  const names = requested
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  /** @type {Target[]} */
+  const resolved = [];
+  for (const name of names) {
+    const target = TARGETS.find((t) => `${t.platform}-${t.arch}` === name);
+    if (!target) {
+      console.error(
+        `Unknown target: ${name}\n` +
+          `Available targets: ${TARGETS.map((t) => `${t.platform}-${t.arch}`).join(', ')}, all`,
+      );
+      process.exit(1);
+    }
+    resolved.push(target);
+  }
+  return resolved;
+}
+
+const selectedTargets = resolveTargets(requestedTarget);
+
+if (requestedTarget === 'all') {
+  // Clean entire prebuilds directory when building all targets
   const prebuildsDir = join(root, 'prebuilds');
   if (existsSync(prebuildsDir)) {
     rmSync(prebuildsDir, { recursive: true });
     console.log('Cleaned previous prebuilds');
   }
-
-  let succeeded = 0;
-  let failed = 0;
-  /** @type {string[]} */
-  const failures = [];
-
-  for (const target of TARGETS) {
-    try {
-      await buildTarget(target, nodeHeadersDir, nodeAddonApiDir);
-      succeeded++;
-    } catch (error) {
-      const key = `${target.platform}-${target.arch}`;
-      console.error(`\nFailed to build ${key}:`, error.message);
-      failures.push(key);
-      failed++;
+} else {
+  // Clean only the selected target directories
+  for (const target of selectedTargets) {
+    const targetDir = join(
+      root,
+      'prebuilds',
+      `${target.platform}-${target.arch}`,
+    );
+    if (existsSync(targetDir)) {
+      rmSync(targetDir, { recursive: true });
+      console.log(
+        `Cleaned previous prebuild for ${target.platform}-${target.arch}`,
+      );
     }
   }
+}
 
-  console.log(`\n${'='.repeat(60)}`);
-  console.log(`Build complete: ${succeeded} succeeded, ${failed} failed`);
-  if (failures.length > 0) {
-    console.log(`Failed targets: ${failures.join(', ')}`);
+let succeeded = 0;
+let failed = 0;
+/** @type {string[]} */
+const failures = [];
+
+for (const target of selectedTargets) {
+  try {
+    buildTarget(target, nodeHeadersDir, nodeAddonApiDir);
+    succeeded++;
+  } catch (error) {
+    const key = `${target.platform}-${target.arch}`;
+    console.error(`\nFailed to build ${key}:`, error.message);
+    failures.push(key);
+    failed++;
   }
+}
 
-  // Clean up temp build directory
-  rmSync(join(root, '.tmp-build'), { recursive: true, force: true });
+console.log(`\n${'='.repeat(60)}`);
+console.log(`Build complete: ${succeeded} succeeded, ${failed} failed`);
+if (failures.length > 0) {
+  console.log(`Failed targets: ${failures.join(', ')}`);
+}
 
-  if (failures.length > 0) {
-    process.exit(1);
-  }
+// Clean up temp build directory
+rmSync(join(root, '.tmp-build'), { recursive: true, force: true });
+
+if (failures.length > 0) {
+  process.exit(1);
 }

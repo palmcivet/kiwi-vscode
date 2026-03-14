@@ -29,6 +29,7 @@ export function setupOnCodeAction(connection: ServerConnection, fileStore: FileS
       return [];
     }
 
+    connection.console.debug(`Computing code actions for ${params.textDocument.uri} with ${diagnostics.length} actionable diagnostics`);
     const schema = fileStore.loadTextSchema(params.textDocument.uri);
     if (!schema) {
       return [];

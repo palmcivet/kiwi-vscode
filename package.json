@@ -84,7 +84,7 @@
         "kiwi-vscode.enableFormatting": {
           "type": "boolean",
           "default": true,
-          "description": "(Beta) Enable code formatting."
+          "description": "(Beta) Enable code formatting. Note: Not available on Windows due to native module limitations."
         },
         "kiwi-vscode.checkForUpdates": {
           "type": "boolean",

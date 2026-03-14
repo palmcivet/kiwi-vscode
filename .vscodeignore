@@ -11,8 +11,10 @@
 prettier.config.mjs
 pnpm-*.yaml
 README.*.md
+CHANGELOG.md
 .github
 .vscode
+.zig-cache
 
 # Project files
 **/*.ts

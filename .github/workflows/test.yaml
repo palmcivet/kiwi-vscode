@@ -13,6 +13,11 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v6
 
+      - name: Install zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.2
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -28,7 +33,16 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm build
+        run: pnpm build:ci
 
       - name: Test
         run: pnpm test
+
+      - name: Package VSIX
+        run: pnpm package
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v5
+        with:
+          name: kiwi-vscode-vsix
+          path: "*.vsix"

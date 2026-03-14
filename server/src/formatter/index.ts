@@ -1,7 +1,7 @@
+import { configStore } from '@server/store';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import type { Plugin } from 'prettier';
-import { configStore } from '@server/store';
 
 interface PrettierInstance {
   /**
@@ -52,9 +52,7 @@ function resolvePrettier(): PrettierInstance {
         isLocal: true,
       };
       cachedWorkspaceRoot = workspaceRoot;
-      console.info(
-        `[kiwi-formatter] Using local prettier from: ${workspaceRoot}`,
-      );
+      console.info(`Using local prettier from: ${workspaceRoot}`);
       return cachedInstance;
     } catch {
       // Local resolution failed, fall back to bundled version
@@ -71,7 +69,7 @@ function resolvePrettier(): PrettierInstance {
     isLocal: false,
   };
   cachedWorkspaceRoot = workspaceRoot;
-  console.info('[kiwi-formatter] Using bundled prettier');
+  console.info('Using bundled prettier');
   return cachedInstance;
 }
 

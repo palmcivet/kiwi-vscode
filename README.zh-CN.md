@@ -1,8 +1,10 @@
-<p align="center">
-  <img width="300" src="https://github.com/palmcivet/kiwi-vscode/blob/master/assets/brand-logo.png?raw=true" alt="Kiwi VSCode brand logo" />
+<p align="center" style="text-align: center">
+  <img width="300" src="./assets/brand-logo.png" alt="Kiwi VSCode brand logo" />
 </p>
 
 # Kiwi VSCode
+
+[![Test](https://github.com/palmcivet/kiwi-vscode/actions/workflows/test.yaml/badge.svg)](https://github.com/palmcivet/kiwi-vscode/actions/workflows/test.yaml) [![GitHub Release](https://img.shields.io/github/v/release/palmcivet/kiwi-vscode)](https://github.com/palmcivet/kiwi-vscode/releases/latest) [![License](https://img.shields.io/github/license/palmcivet/kiwi-vscode?label=License)](./LICENSE.md)
 
 [English](./README.md) | 简体中文
 
@@ -54,6 +56,8 @@
 ## 代码格式化
 
 本扩展内置了 `.kiwi` 文件的代码格式化器，实现为基于 tree-sitter 语法（`tree-sitter-kiwi`）的 Prettier 插件（`prettier-plugin-kiwi`）。格式化器会规范化空格、空行、注释和引号风格，生成一致的 Protobuf 风格输出。
+
+> **注意:** 由于 tree-sitter 原生模块的兼容性问题，代码格式化功能目前在 Windows 上暂不可用。
 
 完整的格式化规范请参见 [Kiwi 格式化规范](./docs/1-kiwi-grammar.zh-CN.md)。
 
@@ -145,6 +149,7 @@ Logo 由 [Slea.ai](https://slea.ai/) 生成，使用的提示词如下：
 
 - [Cursor](https://www.cursor.com/)
 - [Trae](https://www.trae.ai/)
+- [CodeBuddy Code](https://www.codebuddy.ai/cli)
 
 ## 协议
 
