@@ -130,8 +130,6 @@ package/base-2.kiwi    /
 1. 采用 `tsup` 作为构建工具
 2. 使用 `pnpm workspace` 管理 `server/` 和 `client/` 两个模块
 
-在包含 Prettier 和 Tree Sitter 的情况下，仍保持为最小化的构建结果，总计约 59 个文件，总计约 1.75MB。
-
 ## 文档
 
 - [Kiwi 格式化规范](./docs/1-kiwi-grammar.md) - Kiwi 源文件的标准格式化规则

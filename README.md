@@ -1,8 +1,10 @@
-<p align="center">
-  <img width="300" src="https://github.com/palmcivet/kiwi-vscode/blob/master/assets/brand-logo.png?raw=true" alt="Kiwi VSCode brand logo" />
+<p align="center" style="text-align: center">
+  <img width="300" src="./assets/brand-logo.png" alt="Kiwi VSCode brand logo" />
 </p>
 
 # Kiwi VSCode
+
+[![Test](https://github.com/palmcivet/kiwi-vscode/actions/workflows/test.yaml/badge.svg)](https://github.com/palmcivet/kiwi-vscode/actions/workflows/test.yaml)[![GitHub Release](https://img.shields.io/github/v/release/palmcivet/kiwi-vscode)](https://github.com/palmcivet/kiwi-vscode/releases/latest)[![License](https://img.shields.io/github/license/palmcivet/kiwi-vscode?label=License)](./LICENSE.md)
 
 English | [简体中文](./README.zh-CN.md)
 
@@ -130,8 +132,6 @@ This project implements build optimizations:
 
 1. Uses `tsup` as the build tool
 2. Uses `pnpm workspace` to manage `server/` and `client/` modules
-
-The optimized build reduces the packaged extension to ~59 files totaling ~1.75MB.
 
 ## Documentation
 
