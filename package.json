@@ -28,7 +28,7 @@
     "clean": "pnpm -r --parallel --filter='*' clean",
     "clean:deps": "pnpm dlx rimraf -g node_modules **/*/node_modules",
     "build": "pnpm -r --stream --filter='*' build",
-    "build:ci": "pnpm -r --stream --filter='*' build:ci",
+    "build:ci": "pnpm -r --stream --filter='!tree-sitter-kiwi' build:ci",
     "test": "pnpm -r --stream --filter='*' test",
     "format": "prettier --write .",
     "release": "release-it"
@@ -84,7 +84,7 @@
         "kiwi-vscode.enableFormatting": {
           "type": "boolean",
           "default": true,
-          "description": "(Beta) Enable code formatting. Note: Not available on Windows due to native module limitations."
+          "description": "(Beta) Enable code formatting."
         },
         "kiwi-vscode.checkForUpdates": {
           "type": "boolean",

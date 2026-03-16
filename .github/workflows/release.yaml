@@ -6,11 +6,44 @@ on:
       - 'v*'
 
 jobs:
-  release:
-    name: Release Extension
+  build-windows:
+    name: Build Windows (${{ matrix.arch }})
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Windows prebuild
+        run: npx prebuildify --napi --strip --arch ${{ matrix.arch }}
+        working-directory: tree-sitter-kiwi
+
+      - name: Upload prebuilds
+        uses: actions/upload-artifact@v5
+        with:
+          name: prebuilds-win32-${{ matrix.arch }}
+          path: tree-sitter-kiwi/prebuilds/
+
+  build-unix:
+    name: Build Unix (zig cross-compile)
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
@@ -35,11 +68,53 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build Unix prebuilds
+        run: node scripts/build-prebuilds.mjs all
+        working-directory: tree-sitter-kiwi
+
+      - name: Upload prebuilds
+        uses: actions/upload-artifact@v5
+        with:
+          name: prebuilds-unix
+          path: tree-sitter-kiwi/prebuilds/
+
+  release:
+    name: Release Extension
+    needs: [build-windows, build-unix]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download all prebuilds
+        uses: actions/download-artifact@v5
+        with:
+          pattern: prebuilds-*
+          path: tree-sitter-kiwi/prebuilds/
+          merge-multiple: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Run tests
         run: pnpm test
 
-      - name: Run build
-        run: pnpm build:ci
+      - name: Build
+        run: pnpm -r --stream --filter='!tree-sitter-kiwi' build:ci
 
       - name: Package Extension
         run: pnpm package
