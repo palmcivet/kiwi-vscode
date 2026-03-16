@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.2.0](https://github.com/palmcivet/kiwi-vscode/compare/v1.1.0...v1.2.0) (2026-03-16)
+
+
+### Features
+
+* add cross-platform CI build with zig for tree-sitter native bindings ([#2](https://github.com/palmcivet/kiwi-vscode/issues/2)) ([f498b41](https://github.com/palmcivet/kiwi-vscode/commit/f498b417163c7245aa91325174e2e32a58cfe62d))
+
 # 1.1.0 (2026-03-14)
 
 
