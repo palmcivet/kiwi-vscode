@@ -8,15 +8,16 @@
   "scripts": {
     "clean": "rimraf ./out",
     "dev": "tsup --watch --sourcemap",
-    "build": "tsup --clean --minify"
+    "build": "tsup --clean --minify",
+    "build:ci": "pnpm run build"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",
-    "semver": "^7.6.3"
+    "semver": "^7.7.4"
   },
   "devDependencies": {
-    "@types/semver": "^7.5.8",
+    "@types/semver": "^7.7.1",
     "@types/vscode": "^1.75.1",
-    "@vscode/test-electron": "^2.3.9"
+    "@vscode/test-electron": "^2.5.2"
   }
 }

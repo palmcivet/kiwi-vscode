@@ -5,6 +5,7 @@ import { SymbolKind } from 'vscode-languageserver/node';
 
 export function setupOnDocumentSymbol(connection: ServerConnection, fileStore: FileStore): void {
   connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => {
+    connection.console.debug(`Computing document symbols for ${params.textDocument.uri}`);
     const schema = fileStore.loadTextSchema(params.textDocument.uri);
 
     if (!schema) {

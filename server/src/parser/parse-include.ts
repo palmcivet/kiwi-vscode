@@ -1,7 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { dirname, normalize, resolve } from 'node:path';
+import { fileURLToPath as nodeFileURLToPath, pathToFileURL } from 'node:url';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { Range } from 'vscode-languageserver/node';
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
 
 /**
  * Represents a parsed \@include directive in a kiwi file
@@ -33,8 +34,7 @@ export function parseIncludes(text: string): IncludeDirective[] {
     const line = lines[i].trim();
 
     // Skip empty lines
-    if (!line)
-      continue;
+    if (!line) continue;
 
     // Check for include directive
     const match = line.match(/^\/\/\/\s@include\s(['"]?)([^'"]+)\1$/);
@@ -45,8 +45,7 @@ export function parseIncludes(text: string): IncludeDirective[] {
 
     const [fullMatch, , path] = match;
     // Skip if this path has already been included
-    if (parsedPaths.has(path))
-      continue;
+    if (parsedPaths.has(path)) continue;
 
     parsedPaths.add(path);
     const startChar = lines[i].indexOf(fullMatch);
@@ -94,7 +93,11 @@ export interface FilePosition {
  * @param visitedFiles - Set of visited files to prevent circular dependencies
  * @returns Object containing merged content and file position mappings
  */
-export function processKiwiContent(content: string, filePath: string, visitedFiles: Set<string>): {
+export function processKiwiContent(
+  content: string,
+  filePath: string,
+  visitedFiles: Set<string>,
+): {
   content: string;
   filePositions: FilePosition[];
 } {
@@ -111,17 +114,19 @@ export function processKiwiContent(content: string, filePath: string, visitedFil
   // Track position information for included files
   for (const result of includedResults) {
     if (result.content) {
-      filePositions.push(...result.filePositions.map(pos => ({
-        ...pos,
-        startLine: pos.startLine + currentLine,
-      })));
+      filePositions.push(
+        ...result.filePositions.map((pos) => ({
+          ...pos,
+          startLine: pos.startLine + currentLine,
+        })),
+      );
       currentLine += result.content.split('\n').length;
     }
   }
 
   // Process current file content
   const lines = content.split('\n');
-  const includeLines = new Set(includes.map(inc => inc.range.start.line));
+  const includeLines = new Set(includes.map((inc) => inc.range.start.line));
 
   // Create new content array, preserving empty lines for include directives
   // This maintains the original file structure and line numbers
@@ -140,7 +145,7 @@ export function processKiwiContent(content: string, filePath: string, visitedFil
   // 1. Included files' content first
   // 2. Current file's content last
   const finalContent = [
-    ...includedResults.map(r => r.content),
+    ...includedResults.map((r) => r.content),
     contentLines.join('\n'),
   ].join('\n');
 
@@ -157,22 +162,25 @@ export function processKiwiContent(content: string, filePath: string, visitedFil
  *   - `content`: The merged content of the file and all its included dependencies
  *   - `filePositions`: Array of FilePosition objects tracking the location of each file in the merged content
  */
-export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new Set()): {
+export function readKiwiFile(
+  filePath: string,
+  visitedFiles: Set<string> = new Set(),
+): {
   content: string;
   filePositions: FilePosition[];
 } {
   // Prevent circular dependencies by checking if file was already processed
-  if (visitedFiles.has(filePath)) {
+  const normalizedFilePath = normalizePath(filePath);
+  if (visitedFiles.has(normalizedFilePath)) {
     return { content: '', filePositions: [] };
   }
-  visitedFiles.add(filePath);
+  visitedFiles.add(normalizedFilePath);
 
   try {
     const content = readFileSync(filePath, 'utf8');
-    return processKiwiContent(content, filePath, visitedFiles);
-  }
-  // eslint-disable-next-line unused-imports/no-unused-vars
-  catch (error: any) {
+    return processKiwiContent(content, normalizedFilePath, visitedFiles);
+  } catch (error: any) {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     return { content: '', filePositions: [] };
   }
 }
@@ -186,24 +194,27 @@ export function readKiwiFile(filePath: string, visitedFiles: Set<string> = new S
  * @param visitedFiles - Set of visited files to prevent circular dependencies
  * @returns Object containing merged content and file position mappings
  */
-export function readKiwiDocument(document: TextDocument, visitedFiles: Set<string> = new Set()): {
+export function readKiwiDocument(
+  document: TextDocument,
+  visitedFiles: Set<string> = new Set(),
+): {
   content: string;
   filePositions: FilePosition[];
 } {
   const filePath = fileUriToPath(document.uri);
 
   // Prevent circular dependencies by checking if file was already processed
-  if (visitedFiles.has(filePath)) {
+  const normalizedFilePath = normalizePath(filePath);
+  if (visitedFiles.has(normalizedFilePath)) {
     return { content: '', filePositions: [] };
   }
-  visitedFiles.add(filePath);
+  visitedFiles.add(normalizedFilePath);
 
   try {
     const content = document.getText();
-    return processKiwiContent(content, filePath, visitedFiles);
-  }
-  // eslint-disable-next-line unused-imports/no-unused-vars
-  catch (error: any) {
+    return processKiwiContent(content, normalizedFilePath, visitedFiles);
+  } catch (error: any) {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     return { content: '', filePositions: [] };
   }
 }
@@ -222,12 +233,16 @@ export function isPositionInFile(
   filePath: string,
   filePositions: FilePosition[],
 ): boolean {
-  const filePos = filePositions.find(pos => pos.filePath === filePath);
-  if (!filePos)
-    return false;
+  const normalizedFilePath = normalizePath(filePath);
+  const filePos = filePositions.find(
+    (pos) => normalizePath(pos.filePath) === normalizedFilePath,
+  );
+  if (!filePos) return false;
 
-  return position >= filePos.startLine
-    && position < filePos.startLine + filePos.lineCount;
+  return (
+    position >= filePos.startLine &&
+    position < filePos.startLine + filePos.lineCount
+  );
 }
 
 /**
@@ -245,13 +260,19 @@ export function convertPosition(
   filePath: string,
   filePositions: FilePosition[],
 ): number {
-  const filePos = filePositions.find(pos => pos.filePath === filePath);
+  const normalizedFilePath = normalizePath(filePath);
+  const filePos = filePositions.find(
+    (pos) => normalizePath(pos.filePath) === normalizedFilePath,
+  );
   if (!filePos) {
     return position;
   }
 
   // Check if the position is within the file's content range
-  if (position < filePos.startLine || position >= filePos.startLine + filePos.lineCount) {
+  if (
+    position < filePos.startLine ||
+    position >= filePos.startLine + filePos.lineCount
+  ) {
     return position;
   }
 
@@ -261,23 +282,44 @@ export function convertPosition(
 const FILE_URI_PREFIX = 'file://';
 
 /**
- * Converts a file URI to a file path by removing the `file://` prefix if present.
- * Used to normalize file paths when processing workspace files.
+ * Converts a file URI to a file system path using Node.js standard library.
+ * Properly handles URL encoding (e.g., `%3A` → `:`, `%20` → ` `),
+ * Windows drive letter paths, and platform-specific path separators.
  *
  * @param uri - The URI to convert (e.g., `file:///path/to/file` or `/path/to/file`)
- * @returns The file path without the `file://` prefix
+ * @returns The platform-specific file path
  */
 export function fileUriToPath(uri: string): string {
-  return uri.startsWith(FILE_URI_PREFIX) ? uri.slice(FILE_URI_PREFIX.length) : uri;
+  if (uri.startsWith(FILE_URI_PREFIX)) {
+    return nodeFileURLToPath(uri);
+  }
+  return uri;
 }
 
 /**
- * Converts a file path to a URI by adding the `file://` prefix.
- * Used to normalize file paths when processing workspace files.
+ * Converts a file system path to a file URI using Node.js standard library.
+ * Properly handles special characters encoding and platform-specific path formats.
  *
- * @param path - The file path to convert to URI
- * @returns The URI with `file://` prefix
+ * @param filePath - The file path to convert to URI
+ * @returns The properly encoded file URI
  */
-export function pathToFileUri(path: string): string {
-  return path.startsWith(FILE_URI_PREFIX) ? path : `${FILE_URI_PREFIX}${path}`;
+export function pathToFileUri(filePath: string): string {
+  if (filePath.startsWith(FILE_URI_PREFIX)) {
+    return filePath;
+  }
+  return pathToFileURL(filePath).href;
+}
+
+/**
+ * Normalizes a file path for consistent comparison across different platforms.
+ * On Windows, paths are case-insensitive, so we also lowercase the path.
+ * This handles differences in drive letter case (C: vs c:) and path separators (/ vs \).
+ *
+ * @param filePath - The file path to normalize
+ * @returns The normalized file path suitable for comparison
+ */
+export function normalizePath(filePath: string): string {
+  const normalized = normalize(filePath);
+  // On Windows, paths are case-insensitive
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
 }

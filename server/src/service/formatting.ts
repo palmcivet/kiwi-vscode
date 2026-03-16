@@ -1,5 +1,6 @@
 import type { FileStore } from '@server/store';
 import type { ServerConnection } from './type';
+import { fileUriToPath } from '@server/parser';
 import { TextEdit } from 'vscode-languageserver/node';
 import { format } from '@server/formatter';
 
@@ -13,6 +14,9 @@ export function setupOnFormatting(
       return null;
     }
 
+    const filePath = fileUriToPath(document.uri);
+    connection.console.debug(`Formatting document ${filePath}`);
+
     try {
       const formattedText = await format(document.getText());
 
@@ -25,7 +29,8 @@ export function setupOnFormatting(
           formattedText,
         ),
       ];
-    } catch {
+    } catch (error) {
+      connection.console.error(`Failed to format document ${filePath}: ${error}`);
       return null;
     }
   });

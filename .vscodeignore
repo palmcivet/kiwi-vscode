@@ -11,19 +11,19 @@
 prettier.config.mjs
 pnpm-*.yaml
 README.*.md
+CHANGELOG.md
 .github
 .vscode
+.zig-cache
 
 # Project files
 **/*.ts
 **/fixtures
-**/assets
 docs
 tree-sitter-kiwi
 prettier-plugin-kiwi
 
 # Explicit include
-!assets/icon.png
 !server/out/node_modules
 !server/out/node_modules/prettier
 !server/out/node_modules/prettier/**

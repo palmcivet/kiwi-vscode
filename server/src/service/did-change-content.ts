@@ -28,11 +28,13 @@ import {
  * Validates a text document and generates diagnostics.
  * This includes syntax errors, style warnings, and other language-specific issues.
  *
+ * @param connection - The server connection for logging
  * @param textDocument - The document to validate
  * @returns Array of diagnostic messages for the document
  */
-function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
+function validateTextDocument(connection: ServerConnection, textDocument: TextDocument): Diagnostic[] {
   const filePath = fileUriToPath(textDocument.uri);
+  connection.console.debug(`Validating document ${filePath}`);
   const { content: combinedText, filePositions } = readKiwiDocument(textDocument);
 
   let schema: Schema | undefined;
@@ -45,6 +47,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
     errors = validateErrors;
   }
   catch (error: any) {
+    connection.console.error(`Failed to parse schema for ${filePath}: ${error}`);
     errors.push(error);
   }
 
@@ -220,6 +223,7 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
     });
   }
 
+  connection.console.debug(`Validation complete for ${filePath}: ${diagnostics.length} diagnostics`);
   return diagnostics;
 }
 
@@ -237,7 +241,7 @@ export function setupOnDidChangeContent(connection: ServerConnection, fileStore:
     const document = fileStore.getTextDocument(params.textDocument.uri);
     return {
       kind: DocumentDiagnosticReportKind.Full,
-      items: document ? validateTextDocument(document) : [],
+      items: document ? validateTextDocument(connection, document) : [],
     } satisfies DocumentDiagnosticReport;
   });
 }

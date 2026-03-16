@@ -27,7 +27,7 @@ export function setupOnReference(connection: ServerConnection, fileStore: FileSt
       }
 
       const filePath = fileUriToPath(document.uri);
-      connection.console.info(`Finding references in ${filePath} at position ${params.position.line}:${params.position.character}`);
+      connection.console.debug(`Finding references in ${filePath} at position ${params.position.line}:${params.position.character}`);
 
       // Load schemas for the current file and all its dependencies
       const allSchemas = new Map<string, Schema>();

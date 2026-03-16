@@ -2,7 +2,6 @@
  * Copies only the external runtime dependencies (prettier, tree-sitter, etc.)
  * into server/out/node_modules/ for the VSCode extension package.
  */
-
 import { cpSync, mkdirSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -40,7 +39,7 @@ cpSync(prettierDir, prettierDest, {
     return true;
   },
 });
-console.info(`Copied prettier from ${prettierDir}`);
+console.info('Copied prettier');
 
 // 2. Copy prettier-plugin-kiwi (workspace package, only out/ + package.json)
 const pluginPkgPath = require.resolve('prettier-plugin-kiwi/package.json');
@@ -54,7 +53,7 @@ mkdirSync(pluginDest, { recursive: true });
 ].forEach(({ path, recursive }) =>
   cpSync(join(pluginDir, path), join(pluginDest, path), { recursive }),
 );
-console.info(`Copied prettier-plugin-kiwi from ${pluginDir}`);
+console.info('Copied prettier-plugin-kiwi');
 
 // 3. Copy tree-sitter (native module with prebuilds, resolved from plugin's deps)
 const pluginRequire = createRequire(join(pluginDir, 'package.json'));
@@ -72,7 +71,7 @@ mkdirSync(treeSitterDest, { recursive: true });
   cpSync(join(treeSitterDir, path), join(treeSitterDest, path), { recursive }),
 );
 
-console.info(`Copied tree-sitter from ${treeSitterDir}`);
+console.info('Copied tree-sitter');
 
 // 4. Copy tree-sitter-kiwi (workspace native module with prebuilds)
 const treeSitterKiwiPkgPath = pluginRequire.resolve(
@@ -92,7 +91,7 @@ mkdirSync(join(treeSitterKiwiDest, 'src'), { recursive: true });
     recursive,
   }),
 );
-console.info(`Copied tree-sitter-kiwi from ${treeSitterKiwiDir}`);
+console.info('Copied tree-sitter-kiwi');
 
 // 5. Copy node-gyp-build (runtime dependency of tree-sitter and tree-sitter-kiwi)
 const treeSitterRequire = createRequire(join(treeSitterDir, 'package.json'));
@@ -103,7 +102,7 @@ const nodeGypBuildDir = dirname(nodeGypBuildPkgPath);
 const nodeGypBuildDest = join(nodeModulesDir, 'node-gyp-build');
 
 cpSync(nodeGypBuildDir, nodeGypBuildDest, { recursive: true });
-console.info(`Copied node-gyp-build from ${nodeGypBuildDir}`);
+console.info('Copied node-gyp-build');
 
 // Summary
 console.info(`\nDependencies copied to ${nodeModulesDir}`);
