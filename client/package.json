@@ -8,8 +8,7 @@
   "scripts": {
     "clean": "rimraf ./out",
     "dev": "tsup --watch --sourcemap",
-    "build": "tsup --clean --minify",
-    "build:ci": "pnpm run build"
+    "build": "tsup --clean --minify"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",

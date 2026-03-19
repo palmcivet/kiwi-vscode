@@ -18,8 +18,6 @@
     "tree-sitter": "tree-sitter",
     "postinstall": "node-gyp-build",
     "build": "prebuildify --napi --strip",
-    "build:ci": "pnpm run build:all",
-    "build:all": "node scripts/build-prebuilds.mjs all",
     "generate": "tree-sitter generate",
     "clean": "rimraf build prebuilds *.dylib *.wasm",
     "dev": "tree-sitter build --wasm && tree-sitter playground",

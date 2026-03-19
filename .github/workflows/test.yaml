@@ -6,12 +6,18 @@ on:
   pull_request:
 
 jobs:
-  build-windows:
-    name: Build Windows (${{ matrix.arch }})
-    runs-on: windows-latest
+  build:
+    name: Build prebuilds (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        arch: [x64, arm64]
+        include:
+          - { target: darwin-arm64, os: macos-latest }
+          - { target: darwin-x64,   os: macos-13 }
+          - { target: linux-x64,    os: ubuntu-latest }
+          - { target: win32-x64,    os: windows-latest }
+          - { target: win32-arm64,  os: windows-latest, arch: arm64 }
 
     steps:
       - name: Checkout branch
@@ -31,56 +37,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build Windows prebuild
-        run: npx prebuildify --napi --strip --arch ${{ matrix.arch }}
+      - name: Build prebuild
+        run: npx prebuildify --napi --strip ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
         working-directory: tree-sitter-kiwi
 
       - name: Upload prebuilds
         uses: actions/upload-artifact@v5
         with:
-          name: prebuilds-win32-${{ matrix.arch }}
-          path: tree-sitter-kiwi/prebuilds/
-
-  build-unix:
-    name: Build Unix (zig cross-compile)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout branch
-        uses: actions/checkout@v6
-
-      - name: Install zig
-        uses: mlugg/setup-zig@v2
-        with:
-          version: 0.15.2
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build Unix prebuilds
-        run: node scripts/build-prebuilds.mjs all
-        working-directory: tree-sitter-kiwi
-
-      - name: Upload prebuilds
-        uses: actions/upload-artifact@v5
-        with:
-          name: prebuilds-unix
+          name: prebuilds-${{ matrix.target }}
           path: tree-sitter-kiwi/prebuilds/
 
   test:
     name: Test & Package
-    needs: [build-windows, build-unix]
+    needs: [build]
     runs-on: ubuntu-latest
 
     steps:
@@ -109,7 +78,7 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm build:ci
+        run: pnpm build
 
       - name: Test
         run: pnpm test
