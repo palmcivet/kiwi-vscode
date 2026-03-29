@@ -9,7 +9,6 @@
     "clean": "rimraf ./out",
     "dev": "tsup --watch --sourcemap",
     "build": "tsup --clean --minify && node ./scripts/copy-deps.mjs",
-    "build:ci": "pnpm run build",
     "test": "tsup --config ./test.config.ts && mocha ./out/**/*.test.js"
   },
   "dependencies": {

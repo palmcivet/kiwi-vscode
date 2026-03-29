@@ -8,7 +8,6 @@
     "clean": "rimraf ./out",
     "dev": "pnpm test:build -- --watch && pnpm test:run -- --watch",
     "build": "tsup --clean --minify",
-    "build:ci": "pnpm run build",
     "test": "tsup --config ./test.config.ts && mocha ./out/**/*.test.cjs"
   },
   "peerDependencies": {
