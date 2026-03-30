@@ -23,17 +23,6 @@ export function setupOnInitialize(connection: ServerConnection): void {
     configStore.setEnableWarningDiagnostics(!!(initializationOptions?.enableWarningDiagnostics));
     configStore.setEnableFormatting(!!(initializationOptions?.enableFormatting));
 
-    // Disable formatting on Windows due to tree-sitter-kiwi native module compatibility issues
-    if (process.platform === 'win32' && configStore.isFormattingEnabled()) {
-      configStore.setEnableFormatting(false);
-      connection.console.warn(
-        'Code formatting is not available on Windows due to native module compatibility issues with tree-sitter-kiwi.',
-      );
-      connection.window.showWarningMessage(
-        'Kiwi: Code formatting is not available on Windows. Other features (diagnostics, completion, navigation) work normally.',
-      );
-    }
-
     connection.console.info(`Initialized with warningDiagnostics=${configStore.isWarningDiagnosticsEnabled()}, formatting=${configStore.isFormattingEnabled()}`);
 
     const result: InitializeResult = {

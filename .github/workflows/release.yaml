@@ -6,8 +6,50 @@ on:
       - 'v*'
 
 jobs:
+  build:
+    name: Build prebuilds (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: darwin-arm64, os: macos-latest }
+          - { target: darwin-x64,   os: macos-latest, arch: x64 }
+          - { target: linux-x64,    os: ubuntu-latest }
+          - { target: win32-x64,    os: windows-latest }
+          - { target: win32-arm64,  os: windows-latest, arch: arm64 }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build prebuild
+        run: npx prebuildify --napi --strip ${{ matrix.arch && format('--arch {0}', matrix.arch) }}
+        working-directory: tree-sitter-kiwi
+
+      - name: Upload prebuilds
+        uses: actions/upload-artifact@v5
+        with:
+          name: prebuilds-${{ matrix.target }}
+          path: tree-sitter-kiwi/prebuilds/
+
   release:
     name: Release Extension
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,10 +58,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install zig
-        uses: mlugg/setup-zig@v2
+      - name: Download all prebuilds
+        uses: actions/download-artifact@v5
         with:
-          version: 0.15.2
+          pattern: prebuilds-*
+          path: tree-sitter-kiwi/prebuilds/
+          merge-multiple: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -38,8 +82,8 @@ jobs:
       - name: Run tests
         run: pnpm test
 
-      - name: Run build
-        run: pnpm build:ci
+      - name: Build
+        run: pnpm build
 
       - name: Package Extension
         run: pnpm package
