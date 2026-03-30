@@ -71,6 +71,13 @@
       }
     }
   },
+  "pnpm": {
+    "overrides": {
+      "serialize-javascript@<=7.0.2": "^7.0.3",
+      "undici@<6.24.0": "^6.24.0",
+      "yaml@>=2.0.0 <2.8.3": "^2.8.3"
+    }
+  },
   "contributes": {
     "configuration": {
       "title": "Kiwi",
