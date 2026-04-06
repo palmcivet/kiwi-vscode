@@ -8,8 +8,6 @@ export default {
   endOfLine: 'lf',
   arrowParens: 'always',
   bracketSameLine: true,
-  plugins: ['@trivago/prettier-plugin-sort-imports'],
+  plugins: ['@ianvs/prettier-plugin-sort-imports'],
   importOrder: ['^[./]'],
-  importOrderSeparation: true,
-  importOrderSortSpecifiers: true,
 };

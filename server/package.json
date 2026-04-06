@@ -12,8 +12,8 @@
     "test": "tsup --config ./test.config.ts && mocha ./out/**/*.test.js"
   },
   "dependencies": {
-    "change-case": "^5",
-    "prettier": "^3.5.3",
+    "change-case": "^5.4.4",
+    "prettier": "^3.8.1",
     "prettier-plugin-kiwi": "workspace:*",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"
