@@ -9,3 +9,4 @@ onlyBuiltDependencies:
   - tree-sitter-cli
   - tree-sitter-kiwi
   - unrs-resolver
+  - esbuild

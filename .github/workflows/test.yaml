@@ -16,8 +16,8 @@ jobs:
           - { target: darwin-arm64, os: macos-latest }
           - { target: darwin-x64,   os: macos-latest, arch: x64 }
           - { target: linux-x64,    os: ubuntu-latest }
-          - { target: win32-x64,    os: windows-latest }
-          - { target: win32-arm64,  os: windows-latest, arch: arm64 }
+          - { target: win32-x64,    os: windows-2022 }
+          - { target: win32-arm64,  os: windows-2022, arch: arm64 }
 
     steps:
       - name: Checkout branch
